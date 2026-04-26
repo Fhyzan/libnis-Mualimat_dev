@@ -1,12 +1,11 @@
 ---
-title: Libnis Mualimat
-emoji: 📚
+title: Libnis UAD
+emoji: 📊
 colorFrom: blue
-colorTo: indigo
-sdk: gradio
-sdk_version: 6.13.0
-app_file: app.py
-pinned: false
+colorTo: purple
+sdk: docker
+app_port: 7860
 ---
+
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
