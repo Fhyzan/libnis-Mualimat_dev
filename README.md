@@ -1,5 +1,5 @@
 ---
-title: Libnis UAD
+title: Libnis Mualimat
 emoji: 📊
 colorFrom: blue
 colorTo: purple
