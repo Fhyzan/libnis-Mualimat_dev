@@ -3,6 +3,7 @@
 # -*- coding: utf-8 -*-
 import os
 import uuid
+from collections import defaultdict
 
 import matplotlib
 matplotlib.use("Agg")
@@ -24,47 +25,161 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 os.makedirs(GRAPH_FOLDER, exist_ok=True)
 
 
-def draw_graph_to_file(G, filepath, title, max_nodes=70, max_labels=30):
+# ==========================================================
+# LIBNIS MAM - Graph visual utilities
+# - Warna node berdasarkan komunitas
+# - Ukuran node berdasarkan degree centrality
+# - Berlaku untuk jaringan buku dan jaringan peminjam
+# ==========================================================
+
+def _detect_graph_communities(G):
+    """Return dict: node -> community_id.
+    Dipisahkan dari engine agar aman untuk graf buku maupun peminjam.
+    """
     if G.number_of_nodes() == 0:
-        fig = plt.figure(figsize=(8, 6))
+        return {}
+
+    if G.number_of_edges() == 0:
+        return {node: idx for idx, node in enumerate(G.nodes())}
+
+    try:
+        communities = nx.algorithms.community.greedy_modularity_communities(
+            G, weight="weight"
+        )
+    except Exception:
+        communities = nx.connected_components(G)
+
+    node_to_comm = {}
+    for comm_id, nodes in enumerate(communities):
+        for node in nodes:
+            node_to_comm[node] = comm_id
+
+    # fallback jika ada node yang belum masuk komunitas
+    next_id = max(node_to_comm.values(), default=-1) + 1
+    for node in G.nodes():
+        if node not in node_to_comm:
+            node_to_comm[node] = next_id
+            next_id += 1
+    return node_to_comm
+
+
+def _enrich_graph_with_visual_attributes(G):
+    """Tambahkan atribut degree, degree_centrality, community, size, dan color ke node."""
+    if G.number_of_nodes() == 0:
+        return {}, {}, {}
+
+    degree_dict = dict(G.degree(weight="weight"))
+    degree_centrality = nx.degree_centrality(G)
+    communities = _detect_graph_communities(G)
+
+    max_dc = max(degree_centrality.values(), default=0) or 1
+    cmap = plt.get_cmap("tab20")
+
+    for node in G.nodes():
+        comm_id = communities.get(node, 0)
+        norm_dc = degree_centrality.get(node, 0) / max_dc
+        node_size = 180 + (norm_dc * 1450)  # makin tinggi degree, makin besar node
+        color = matplotlib.colors.to_hex(cmap(comm_id % 20))
+
+        G.nodes[node]["degree"] = float(degree_dict.get(node, 0))
+        G.nodes[node]["degree_centrality"] = float(degree_centrality.get(node, 0))
+        G.nodes[node]["community"] = int(comm_id)
+        G.nodes[node]["visual_size"] = float(node_size)
+        G.nodes[node]["visual_color"] = color
+
+    return degree_dict, degree_centrality, communities
+
+
+def _community_summary(communities):
+    grouped = defaultdict(int)
+    for _, comm_id in communities.items():
+        grouped[comm_id] += 1
+    return [
+        {"community": comm_id, "nodes": count}
+        for comm_id, count in sorted(grouped.items(), key=lambda x: (-x[1], x[0]))
+    ]
+
+
+def draw_graph_to_file(G, filepath, title, max_nodes=90, max_labels=25):
+    if G.number_of_nodes() == 0:
+        fig = plt.figure(figsize=(10, 7))
         plt.text(0.5, 0.5, "Data visualisasi belum tersedia", ha="center", va="center", fontsize=16)
         plt.title(title)
         plt.axis("off")
-        plt.savefig(filepath, bbox_inches="tight")
+        plt.savefig(filepath, bbox_inches="tight", dpi=180)
         plt.close(fig)
         return
+
+    _enrich_graph_with_visual_attributes(G)
 
     if G.number_of_nodes() > max_nodes:
         wd = dict(G.degree(weight="weight"))
         keep = sorted(wd, key=wd.get, reverse=True)[:max_nodes]
         G_plot = G.subgraph(keep).copy()
+        _enrich_graph_with_visual_attributes(G_plot)
     else:
         G_plot = G.copy()
 
-    fig = plt.figure(figsize=(9, 7))
-    pos = nx.spring_layout(G_plot, seed=42, k=0.7)
-    weights = [G_plot[u][v].get("weight", 1) for u, v in G_plot.edges()]
-    widths = [0.4 + min(w, 5) * 0.35 for w in weights]
+    fig = plt.figure(figsize=(13, 9))
+    pos = nx.spring_layout(G_plot, seed=42, k=0.85, weight="weight")
 
-    nx.draw_networkx_nodes(G_plot, pos, node_size=90, alpha=0.85)
-    nx.draw_networkx_edges(G_plot, pos, width=widths, alpha=0.25)
+    weights = [G_plot[u][v].get("weight", 1) for u, v in G_plot.edges()]
+    widths = [0.35 + min(w, 8) * 0.22 for w in weights]
+    node_sizes = [G_plot.nodes[n].get("visual_size", 300) for n in G_plot.nodes()]
+    node_colors = [G_plot.nodes[n].get("visual_color", "#4C78A8") for n in G_plot.nodes()]
+
+    nx.draw_networkx_edges(G_plot, pos, width=widths, alpha=0.22, edge_color="#777777")
+    nx.draw_networkx_nodes(
+        G_plot,
+        pos,
+        node_size=node_sizes,
+        node_color=node_colors,
+        alpha=0.92,
+        linewidths=0.6,
+        edgecolors="white",
+    )
 
     if G_plot.number_of_nodes() <= max_labels:
         labels = {n: G_plot.nodes[n].get("label", n) for n in G_plot.nodes()}
         nx.draw_networkx_labels(G_plot, pos, labels=labels, font_size=7)
 
-    plt.title(f"{title}\nJumlah unsur={G_plot.number_of_nodes()} | Jumlah hubungan={G_plot.number_of_edges()}")
+    comm_count = len(set(nx.get_node_attributes(G_plot, "community").values()))
+    plt.title(
+        f"{title}\n"
+        f"Node={G_plot.number_of_nodes()} | Edge={G_plot.number_of_edges()} | Komunitas={comm_count}\n"
+        "Warna = komunitas | Ukuran node = degree centrality",
+        fontsize=13,
+    )
     plt.axis("off")
-    plt.savefig(filepath, bbox_inches="tight")
+    plt.tight_layout()
+    plt.savefig(filepath, bbox_inches="tight", dpi=180)
     plt.close(fig)
 
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    # Progress bar ini dipakai template untuk menampilkan tahapan proses.
+    # Di template, tampilkan ketika form di-submit menggunakan JavaScript/CSS.
+    processing_steps = [
+        "Mengunggah file",
+        "Membaca data sirkulasi",
+        "Membangun jaringan buku",
+        "Membangun jaringan peminjam",
+        "Menghitung degree centrality",
+        "Mendeteksi komunitas",
+        "Membuat visualisasi",
+        "Menyiapkan laporan",
+    ]
+
     if request.method == "POST":
         file = request.files.get("file")
         if not file or file.filename == "":
-            return render_template("index.html", error="Silakan unggah file Excel data sirkulasi terlebih dahulu.")
+            return render_template(
+                "index.html",
+                error="Silakan unggah file Excel data sirkulasi terlebih dahulu.",
+                app_title="LIBNIS MAM",
+                processing_steps=processing_steps,
+            )
 
         filename = secure_filename(file.filename)
         unique_id = str(uuid.uuid4())[:8]
@@ -84,12 +199,16 @@ def index():
                 start_date=start_date,
                 end_date=end_date,
                 kelompok=kelompok,
-                status=status
+                status=status,
             )
 
             summary = engine.circulation_summary(df)
             G_books = engine.build_book_graph(df)
             G_members = engine.build_member_graph(df)
+
+            # Tambahkan atribut visual pada kedua jaringan sebelum metrik, gambar, dan GEXF diekspor.
+            _, _, book_communities = _enrich_graph_with_visual_attributes(G_books)
+            _, _, member_communities = _enrich_graph_with_visual_attributes(G_members)
 
             m_books = engine.compute_metrics(G_books)
             m_members = engine.compute_metrics(G_members)
@@ -98,14 +217,25 @@ def index():
             monthly_df = engine.monthly_stats(df)
             top_titles_df = engine.top_titles(df, 10)
             top_members_df = engine.top_members(df, 10)
+
+            # Tetap memakai engine lama untuk kompatibilitas tabel/insight,
+            # tetapi komunitas visual diambil dari graf buku dan graf peminjam.
             communities = engine.detect_communities(G_books)
             insights = engine.generate_library_insights(df, m_books, m_members)
 
             book_graph_file = f"book_graph_{unique_id}.png"
             member_graph_file = f"member_graph_{unique_id}.png"
 
-            draw_graph_to_file(G_books, os.path.join(GRAPH_FOLDER, book_graph_file), "Peta Keterkaitan Koleksi")
-            draw_graph_to_file(G_members, os.path.join(GRAPH_FOLDER, member_graph_file), "Peta Kesamaan Minat Baca Anggota")
+            draw_graph_to_file(
+                G_books,
+                os.path.join(GRAPH_FOLDER, book_graph_file),
+                "Peta Komunitas Koleksi Buku",
+            )
+            draw_graph_to_file(
+                G_members,
+                os.path.join(GRAPH_FOLDER, member_graph_file),
+                "Peta Komunitas Peminjam",
+            )
 
             excel_path = os.path.join(OUTPUT_FOLDER, f"laporan_libnis_mam_{unique_id}.xlsx")
             engine.export_excel(excel_path, {
@@ -115,7 +245,7 @@ def index():
                 "KelompokPenggunaAktif": kelompok_df,
                 "TrenSirkulasiBulanan": monthly_df,
                 "JudulSeringDipinjam": top_titles_df,
-                "AnggotaPalingAktif": top_members_df
+                "AnggotaPalingAktif": top_members_df,
             })
 
             gexf_books = os.path.join(OUTPUT_FOLDER, f"visualisasi_koleksi_{unique_id}.gexf")
@@ -125,6 +255,7 @@ def index():
 
             return render_template(
                 "index.html",
+                app_title="LIBNIS MAM",
                 success="Analisis layanan perpustakaan berhasil ditampilkan.",
                 summary=summary,
                 insights=insights,
@@ -135,17 +266,29 @@ def index():
                 top_titles_table=top_titles_df.to_html(classes="table table-striped", index=False),
                 top_members_table=top_members_df.to_html(classes="table table-striped", index=False),
                 communities=communities,
+                book_community_summary=_community_summary(book_communities),
+                member_community_summary=_community_summary(member_communities),
                 book_graph=book_graph_file,
                 member_graph=member_graph_file,
                 excel_file=os.path.basename(excel_path),
                 gexf_books=os.path.basename(gexf_books),
                 gexf_members=os.path.basename(gexf_members),
+                processing_steps=processing_steps,
             )
 
         except Exception as e:
-            return render_template("index.html", error=f"Data tidak dapat diproses: {e}")
+            return render_template(
+                "index.html",
+                error=f"Data tidak dapat diproses: {e}",
+                app_title="LIBNIS MAM",
+                processing_steps=processing_steps,
+            )
 
-    return render_template("index.html")
+    return render_template(
+        "index.html",
+        app_title="LIBNIS MAM",
+        processing_steps=processing_steps,
+    )
 
 
 @app.route("/download/<filename>")
