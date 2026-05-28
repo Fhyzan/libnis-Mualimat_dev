@@ -1,4 +1,5 @@
 
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
 import uuid
@@ -90,7 +91,7 @@ def _enrich_graph_with_visual_attributes(G):
 
 
 def _community_summary(communities, G=None, max_items=12, max_examples=4):
-    """Ringkasan komunitas untuk legenda warna di dashboard.
+    """Ringkasan komunitas untuk keterangan warna di dashboard.
 
     Output dibuat kompatibel dengan template:
     - community: nomor komunitas berbasis 1 untuk tampilan
@@ -157,7 +158,8 @@ def draw_graph_to_file(G, filepath, title, max_nodes=90, max_labels=25):
     node_sizes = [G_plot.nodes[n].get("visual_size", 300) for n in G_plot.nodes()]
     node_colors = [G_plot.nodes[n].get("visual_color", "#4C78A8") for n in G_plot.nodes()]
 
-    nx.draw_networkx_edges(G_plot, pos, width=widths, alpha=0.22, edge_color="#777777")
+    # Edge dibuat lebih terlihat agar pola hubungan antar-node mudah dibaca.
+    nx.draw_networkx_edges(G_plot, pos, width=widths, alpha=0.42, edge_color="#4b5563")
     nx.draw_networkx_nodes(
         G_plot,
         pos,
@@ -168,20 +170,62 @@ def draw_graph_to_file(G, filepath, title, max_nodes=90, max_labels=25):
         edgecolors="white",
     )
 
-    if G_plot.number_of_nodes() <= max_labels:
-        labels = {n: G_plot.nodes[n].get("label", n) for n in G_plot.nodes()}
-        nx.draw_networkx_labels(G_plot, pos, labels=labels, font_size=7)
+    # Label ditampilkan hanya untuk node terbesar pada setiap komunitas
+    # agar visual tetap bersih tetapi node utama tetap terbaca.
+    labels = {}
+    grouped_by_comm = defaultdict(list)
+    for n in G_plot.nodes():
+        grouped_by_comm[G_plot.nodes[n].get("community", 0)].append(n)
+
+    for comm_id, nodes in grouped_by_comm.items():
+        top_node = max(
+            nodes,
+            key=lambda n: (
+                G_plot.nodes[n].get("visual_size", 0),
+                G_plot.nodes[n].get("degree", 0),
+                str(G_plot.nodes[n].get("label", n))
+            )
+        )
+        labels[top_node] = G_plot.nodes[top_node].get("label", top_node)
+
+    nx.draw_networkx_labels(
+        G_plot,
+        pos,
+        labels=labels,
+        font_size=8,
+        font_weight="bold",
+        font_color="#111827",
+        bbox=dict(facecolor="white", edgecolor="none", alpha=0.72, boxstyle="round,pad=0.18"),
+    )
+
+    # Bobot sisi ditampilkan untuk graf yang tidak terlalu padat.
+    # Untuk graf besar, garis sisi tetap terlihat tetapi label bobot disembunyikan agar gambar tidak penuh.
+    if G_plot.number_of_edges() <= 70:
+        edge_labels = {
+            (u, v): G_plot[u][v].get("weight", 1)
+            for u, v in G_plot.edges()
+            if G_plot[u][v].get("weight", 1) > 1
+        }
+        if edge_labels:
+            nx.draw_networkx_edge_labels(
+                G_plot,
+                pos,
+                edge_labels=edge_labels,
+                font_size=6,
+                font_color="#374151",
+                bbox=dict(facecolor="white", edgecolor="none", alpha=0.62, boxstyle="round,pad=0.10"),
+            )
 
     comm_values = sorted(set(nx.get_node_attributes(G_plot, "community").values()))
     comm_count = len(comm_values)
     plt.title(
         f"{title}\n"
-        f"Node={G_plot.number_of_nodes()} | Edge={G_plot.number_of_edges()} | Communities={comm_count}\n"
-        "Color = community | Node size = degree centrality",
+        f"Simpul={G_plot.number_of_nodes()} | Sisi={G_plot.number_of_edges()} | Komunitas={comm_count}\n"
+        "Warna = komunitas | Ukuran simpul = sentralitas derajat",
         fontsize=13,
     )
 
-    # Legend warna komunitas ditampilkan langsung di gambar untuk konsistensi
+    # Keterangan warna komunitas ditampilkan langsung di gambar untuk konsistensi
     # dengan keterangan pada dashboard dan file GEXF.
     legend_handles = []
     for comm_id in comm_values[:12]:
@@ -193,7 +237,7 @@ def draw_graph_to_file(G, filepath, title, max_nodes=90, max_labels=25):
                     [0], [0],
                     marker="o",
                     color="w",
-                    label=f"Community {int(comm_id) + 1}",
+                    label=f"Komunitas {int(comm_id) + 1}",
                     markerfacecolor=color,
                     markeredgecolor="white",
                     markersize=8,
@@ -207,7 +251,7 @@ def draw_graph_to_file(G, filepath, title, max_nodes=90, max_labels=25):
             bbox_to_anchor=(0.0, 0.0),
             frameon=True,
             fontsize=8,
-            title="Community color",
+            title="Keterangan Warna",
             title_fontsize=9,
         )
 
@@ -290,12 +334,12 @@ def index():
             draw_graph_to_file(
                 G_books,
                 os.path.join(GRAPH_FOLDER, book_graph_file),
-                "Collection Relationship Network",
+                "Jaringan Keterkaitan Koleksi",
             )
             draw_graph_to_file(
                 G_members,
                 os.path.join(GRAPH_FOLDER, member_graph_file),
-                "User Borrowing Similarity Network",
+                "Jaringan Kesamaan Peminjaman Anggota",
             )
 
             excel_path = os.path.join(OUTPUT_FOLDER, f"laporan_libnis_mam_{unique_id}.xlsx")
@@ -362,3 +406,4 @@ def download_file(filename):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=7860, debug=True)
+
