@@ -289,6 +289,103 @@
             margin-bottom: 10px;
         }
 
+
+        .section-eyebrow {
+            color: var(--primary-dark);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+        }
+
+        .network-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .network-title h3 {
+            margin: 0;
+        }
+
+        .network-badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            background: #eef7f1;
+            border: 1px solid #d9ebdf;
+            white-space: nowrap;
+        }
+
+        .community-legend {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: #fbfcfd;
+        }
+
+        .community-legend-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 12px;
+            background: white;
+            border: 1px solid #eef0f2;
+            font-size: 12px;
+        }
+
+        .legend-dot {
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            margin-top: 2px;
+            flex: 0 0 auto;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.12);
+        }
+
+        .legend-meta {
+            min-width: 0;
+            line-height: 1.35;
+        }
+
+        .legend-meta strong {
+            display: block;
+            color: #111827;
+            font-size: 12px;
+        }
+
+        .legend-meta span {
+            display: block;
+            color: var(--muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .download-group {
             display: flex;
             gap: 10px;
@@ -619,18 +716,65 @@
         </section>
 
         <section class="card">
-            <h2>Visualisasi Jejaring Buku dan Peminjam</h2>
+            <div class="section-eyebrow">Collection and Borrowing Relationship Visualization</div>
+            <h2>Collection and Borrowing Relationship Visualization</h2>
             <div class="mini-note">
-                Warna node menunjukkan komunitas. Ukuran node menunjukkan degree centrality: semakin besar node, semakin kuat keterhubungannya.
+                Node color represents detected community. Node size represents degree centrality: larger nodes indicate stronger relationship intensity.
             </div>
+
             <div class="visual-grid">
                 <div class="graph-box">
-                    <h3>Jaringan Buku</h3>
-                    <img src="{{ url_for('static', filename='graphs/' + book_graph) }}" alt="Peta Keterkaitan Koleksi">
+                    <div class="network-title">
+                        <h3>Collection Relationship Network</h3>
+                        <span class="network-badge">Color = community</span>
+                    </div>
+                    <img src="{{ url_for('static', filename='graphs/' + book_graph) }}" alt="Collection Relationship Network">
+
+                    <div class="community-legend">
+                        <div class="community-legend-title">Collection community legend</div>
+                        {% if book_community_summary %}
+                        <div class="legend-grid">
+                            {% for c in book_community_summary %}
+                            <div class="legend-item">
+                                <span class="legend-dot" style="background: {{ c.color }}"></span>
+                                <div class="legend-meta">
+                                    <strong>Community {{ c.community }} · {{ c.nodes }} nodes</strong>
+                                    <span>{{ c.examples }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="mini-note">Community legend is not available.</div>
+                        {% endif %}
+                    </div>
                 </div>
+
                 <div class="graph-box">
-                    <h3>Jaringan Peminjam</h3>
-                    <img src="{{ url_for('static', filename='graphs/' + member_graph) }}" alt="Peta Kesamaan Minat Baca Anggota">
+                    <div class="network-title">
+                        <h3>User Borrowing Similarity Network</h3>
+                        <span class="network-badge">Size = degree centrality</span>
+                    </div>
+                    <img src="{{ url_for('static', filename='graphs/' + member_graph) }}" alt="User Borrowing Similarity Network">
+
+                    <div class="community-legend">
+                        <div class="community-legend-title">User community legend</div>
+                        {% if member_community_summary %}
+                        <div class="legend-grid">
+                            {% for c in member_community_summary %}
+                            <div class="legend-item">
+                                <span class="legend-dot" style="background: {{ c.color }}"></span>
+                                <div class="legend-meta">
+                                    <strong>Community {{ c.community }} · {{ c.nodes }} nodes</strong>
+                                    <span>{{ c.examples }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="mini-note">Community legend is not available.</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </section>
