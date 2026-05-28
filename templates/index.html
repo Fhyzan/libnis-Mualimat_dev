@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -25,7 +24,9 @@
             --radius: 18px;
         }
 
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
         body {
             margin: 0;
@@ -37,70 +38,69 @@
             color: var(--text);
         }
 
-        .layout {
-            display: grid;
-            grid-template-columns: 170px minmax(0, 1fr);
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            background: linear-gradient(180deg, var(--primary-dark), var(--primary));
-            color: white;
-            padding: 22px 14px;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            text-align: center;
-        }
-
-        .brand img {
-            width: 92px;
-            height: 92px;
-            object-fit: contain;
-            background: white;
-            border-radius: 22px;
-            padding: 9px;
-            box-shadow: 0 10px 24px rgba(0,0,0,0.18);
-        }
-
-        .brand h1 {
-            margin: 16px 0 4px 0;
-            font-size: 22px;
-            line-height: 1.05;
-            letter-spacing: 0.5px;
-        }
-
-        .brand small {
-            display: block;
-            opacity: 0.86;
-            font-size: 11px;
-            line-height: 1.35;
-        }
-
-        .side-chip {
-            width: 100%;
-            border: 1px solid rgba(255,255,255,0.18);
-            background: rgba(255,255,255,0.08);
-            border-radius: 16px;
-            padding: 12px 8px;
-            font-size: 12px;
-            line-height: 1.45;
-        }
-
         .main {
             min-width: 0;
             padding: 22px;
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            background: rgba(255,255,255,0.88);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.72);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 16px 20px;
+            margin-bottom: 18px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-left img {
+            width: 68px;
+            height: 68px;
+            object-fit: contain;
+            background: white;
+            border-radius: 16px;
+            padding: 7px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+
+        .header-left h1 {
+            margin: 0;
+            color: var(--primary-dark);
+            font-size: 26px;
+            letter-spacing: 0.4px;
+        }
+
+        .header-left small {
+            display: block;
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .header-right {
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+            border: 1px solid #cce7d8;
+            font-weight: 800;
+            font-size: 13px;
+            white-space: nowrap;
         }
 
         .hero {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            gap: 16px;
-            align-items: center;
             background: rgba(255,255,255,0.82);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.72);
@@ -120,20 +120,6 @@
             margin: 5px 0 0 0;
             color: var(--muted);
             font-size: 13px;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 14px;
-            background: var(--primary-soft);
-            color: var(--primary-dark);
-            border: 1px solid #cce7d8;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 700;
-            white-space: nowrap;
         }
 
         .alert-success, .alert-danger {
@@ -229,7 +215,9 @@
             box-shadow: 0 6px 16px rgba(15,107,63,0.25);
         }
 
-        .btn:hover { opacity: 0.96; }
+        .btn:hover {
+            opacity: 0.96;
+        }
 
         .kpi-grid {
             display: grid;
@@ -274,8 +262,8 @@
 
         .graph-box img {
             width: 100%;
-            min-height: 420px;
-            max-height: 640px;
+            min-height: 440px;
+            max-height: 680px;
             object-fit: contain;
             border-radius: 14px;
             background: #fff;
@@ -288,7 +276,6 @@
             margin-top: -4px;
             margin-bottom: 10px;
         }
-
 
         .section-eyebrow {
             color: var(--primary-dark);
@@ -324,7 +311,7 @@
             white-space: nowrap;
         }
 
-        .community-legend {
+        .community-box {
             margin-top: 12px;
             padding: 12px;
             border-radius: 14px;
@@ -332,22 +319,13 @@
             background: #fbfcfd;
         }
 
-        .community-legend-title {
-            font-size: 12px;
-            font-weight: 800;
-            color: var(--primary-dark);
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .legend-grid {
+        .community-grid-color {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 8px;
         }
 
-        .legend-item {
+        .community-item {
             display: flex;
             align-items: flex-start;
             gap: 8px;
@@ -358,7 +336,7 @@
             font-size: 12px;
         }
 
-        .legend-dot {
+        .community-dot {
             width: 13px;
             height: 13px;
             border-radius: 50%;
@@ -368,18 +346,18 @@
             box-shadow: 0 0 0 1px rgba(0,0,0,0.12);
         }
 
-        .legend-meta {
+        .community-meta {
             min-width: 0;
             line-height: 1.35;
         }
 
-        .legend-meta strong {
+        .community-meta strong {
             display: block;
             color: #111827;
             font-size: 12px;
         }
 
-        .legend-meta span {
+        .community-meta span {
             display: block;
             color: var(--muted);
             overflow: hidden;
@@ -444,7 +422,9 @@
             z-index: 1;
         }
 
-        tr:hover td { background: #fbfcfd; }
+        tr:hover td {
+            background: #fbfcfd;
+        }
 
         .community-grid {
             display: grid;
@@ -474,6 +454,7 @@
             font-size: 12px;
             color: var(--muted);
             line-height: 1.7;
+            padding-bottom: 20px;
         }
 
         .loading-overlay {
@@ -542,64 +523,47 @@
             .filter-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+
             .visual-grid,
             .data-grid,
-            .community-grid {
+            .community-grid,
+            .community-grid-color {
                 grid-template-columns: 1fr;
             }
+
             .graph-box img {
                 min-height: 340px;
             }
         }
 
         @media (max-width: 760px) {
-            .layout {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                height: auto;
-                min-height: auto;
-                position: relative;
-                flex-direction: row;
-                justify-content: center;
-                gap: 16px;
+            .main {
                 padding: 14px;
             }
 
-            .brand {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                text-align: left;
+            .top-header {
+                align-items: flex-start;
+                flex-direction: column;
             }
 
-            .brand img {
+            .header-left img {
                 width: 58px;
                 height: 58px;
                 border-radius: 14px;
             }
 
-            .brand h1 {
-                margin: 0;
-                font-size: 18px;
-            }
-
-            .side-chip {
-                display: none;
-            }
-
-            .main {
-                padding: 14px;
-            }
-
-            .hero {
-                grid-template-columns: 1fr;
+            .header-left h1 {
+                font-size: 21px;
             }
 
             .filter-grid,
             .kpi-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .network-title {
+                align-items: flex-start;
+                flex-direction: column;
             }
         }
     </style>
@@ -618,244 +582,246 @@
     </div>
 </div>
 
-<div class="layout">
-    <aside class="sidebar">
-        <div class="brand">
+<main class="main">
+
+    <header class="top-header">
+        <div class="header-left">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo LIBNIS MAM">
             <div>
-                <h1>LIBNIS<br>MAM</h1>
-                <small>Library Network Intelligence System</small>
+                <h1>LIBNIS MAM</h1>
+                <small>Sistem Analisis Jejaring Perpustakaan</small>
             </div>
         </div>
-        <div class="side-chip">
-            Visual Graph<br>
-            Community • Centrality • Library Analytics
+
+        <div class="header-right">
+            TEKNOLOGI TEPAT GUNA
         </div>
-    </aside>
+    </header>
 
-    <main class="main">
-        <section class="hero">
-            <div>
-                <h2>Dashboard Visual Jejaring Perpustakaan</h2>
-                <p>Analisis jaringan buku dan peminjam dengan warna komunitas serta ukuran node berbasis degree centrality.</p>
-            </div>
-            <div class="badge">LIBNIS MAM • Full Data Visual</div>
-        </section>
+    <section class="hero">
+        <h2>Dashboard Visual Jejaring Perpustakaan</h2>
+        <p>
+            Analisis jaringan buku dan peminjam dengan warna komunitas, ukuran node berdasarkan degree centrality,
+            serta hubungan antar-node yang ditampilkan melalui edge.
+        </p>
+    </section>
 
-        {% if success %}
-        <div class="alert-success">{{ success }}</div>
-        {% endif %}
+    {% if success %}
+    <div class="alert-success">{{ success }}</div>
+    {% endif %}
 
-        {% if error %}
-        <div class="alert-danger">{{ error }}</div>
-        {% endif %}
+    {% if error %}
+    <div class="alert-danger">{{ error }}</div>
+    {% endif %}
 
-        <section class="card upload-card">
-            <h2>Unggah Data dan Jalankan Analisis</h2>
-            <form method="POST" enctype="multipart/form-data" id="analysisForm">
-                <div class="filter-grid">
-                    <div class="field">
-                        <label>File Excel data sirkulasi</label>
-                        <input type="file" name="file" accept=".xls,.xlsx" required>
-                    </div>
-
-                    <div class="field">
-                        <label>Periode awal</label>
-                        <input type="date" name="start_date">
-                    </div>
-
-                    <div class="field">
-                        <label>Periode akhir</label>
-                        <input type="date" name="end_date">
-                    </div>
-
-                    <div class="field">
-                        <label>Kelompok pengguna</label>
-                        <select name="kelompok">
-                            <option value="Semua">Semua</option>
-                            <option value="MA">MA</option>
-                            <option value="MTs">MTs</option>
-                            <option value="ID Numerik">ID Numerik</option>
-                            <option value="Lainnya">Lainnya</option>
-                        </select>
-                    </div>
-
-                    <div class="field">
-                        <label>Status sirkulasi</label>
-                        <select name="status">
-                            <option value="Semua">Semua</option>
-                            <option value="Dipinjam">Dipinjam</option>
-                            <option value="Kembali">Kembali</option>
-                            <option value="Tidak diketahui">Tidak diketahui</option>
-                        </select>
-                    </div>
+    <section class="card upload-card">
+        <h2>Unggah Data dan Jalankan Analisis</h2>
+        <form method="POST" enctype="multipart/form-data" id="analysisForm">
+            <div class="filter-grid">
+                <div class="field">
+                    <label>File Excel data sirkulasi</label>
+                    <input type="file" name="file" accept=".xls,.xlsx" required>
                 </div>
 
-                <div style="margin-top:14px; max-width:260px;">
-                    <button class="btn" type="submit">Tampilkan Visualisasi</button>
+                <div class="field">
+                    <label>Periode awal</label>
+                    <input type="date" name="start_date">
                 </div>
-            </form>
-        </section>
 
-        {% if summary %}
-        <section class="card">
-            <div class="kpi-grid">
-                <div class="kpi-card">
-                    <div class="kpi-label">Transaksi Sirkulasi</div>
-                    <div class="kpi-value">{{ summary.total_transaksi }}</div>
+                <div class="field">
+                    <label>Periode akhir</label>
+                    <input type="date" name="end_date">
                 </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">Judul Terpinjam</div>
-                    <div class="kpi-value">{{ summary.total_judul }}</div>
+
+                <div class="field">
+                    <label>Kelompok pengguna</label>
+                    <select name="kelompok">
+                        <option value="Semua">Semua</option>
+                        <option value="MA">MA</option>
+                        <option value="MTs">MTs</option>
+                        <option value="ID Numerik">ID Numerik</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
                 </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">Anggota Peminjam</div>
-                    <div class="kpi-value">{{ summary.total_anggota }}</div>
+
+                <div class="field">
+                    <label>Status sirkulasi</label>
+                    <select name="status">
+                        <option value="Semua">Semua</option>
+                        <option value="Dipinjam">Dipinjam</option>
+                        <option value="Kembali">Kembali</option>
+                        <option value="Tidak diketahui">Tidak diketahui</option>
+                    </select>
                 </div>
             </div>
-        </section>
 
-        <section class="card">
-            <div class="section-eyebrow">Collection and Borrowing Relationship Visualization</div>
-            <h2>Collection and Borrowing Relationship Visualization</h2>
-            <div class="mini-note">
-                Node color represents detected community. Node size represents degree centrality: larger nodes indicate stronger relationship intensity.
+            <div style="margin-top:14px; max-width:260px;">
+                <button class="btn" type="submit">Tampilkan Visualisasi</button>
             </div>
+        </form>
+    </section>
 
-            <div class="visual-grid">
-                <div class="graph-box">
-                    <div class="network-title">
-                        <h3>Collection Relationship Network</h3>
-                        <span class="network-badge">Color = community</span>
-                    </div>
-                    <img src="{{ url_for('static', filename='graphs/' + book_graph) }}" alt="Collection Relationship Network">
+    {% if summary %}
+    <section class="card">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Transaksi Sirkulasi</div>
+                <div class="kpi-value">{{ summary.total_transaksi }}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Judul Terpinjam</div>
+                <div class="kpi-value">{{ summary.total_judul }}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Anggota Peminjam</div>
+                <div class="kpi-value">{{ summary.total_anggota }}</div>
+            </div>
+        </div>
+    </section>
 
-                    <div class="community-legend">
-                        <div class="community-legend-title">Collection community legend</div>
-                        {% if book_community_summary %}
-                        <div class="legend-grid">
-                            {% for c in book_community_summary %}
-                            <div class="legend-item">
-                                <span class="legend-dot" style="background: {{ c.color }}"></span>
-                                <div class="legend-meta">
-                                    <strong>Community {{ c.community }} · {{ c.nodes }} nodes</strong>
-                                    <span>{{ c.examples }}</span>
-                                </div>
+    <section class="card">
+        <div class="section-eyebrow">Visualisasi Jejaring Koleksi dan Peminjaman</div>
+        <h2>Visualisasi Jejaring Koleksi dan Peminjaman</h2>
+        <div class="mini-note">
+            Warna node menunjukkan komunitas. Ukuran node menunjukkan degree centrality:
+            semakin besar node, semakin tinggi keterhubungannya. Garis menunjukkan edge atau relasi antar-node.
+        </div>
+
+        <div class="visual-grid">
+            <div class="graph-box">
+                <div class="network-title">
+                    <h3>Jejaring Keterkaitan Koleksi</h3>
+                    <span class="network-badge">Warna = komunitas</span>
+                </div>
+
+                <img src="{{ url_for('static', filename='graphs/' + book_graph) }}" alt="Jejaring Keterkaitan Koleksi">
+
+                <div class="community-box">
+                    {% if book_community_summary %}
+                    <div class="community-grid-color">
+                        {% for c in book_community_summary %}
+                        <div class="community-item">
+                            <span class="community-dot" style="background: {{ c.color }}"></span>
+                            <div class="community-meta">
+                                <strong>Komunitas {{ c.community }} · {{ c.nodes }} node</strong>
+                                <span>{{ c.examples }}</span>
                             </div>
-                            {% endfor %}
                         </div>
-                        {% else %}
-                        <div class="mini-note">Community legend is not available.</div>
-                        {% endif %}
+                        {% endfor %}
                     </div>
+                    {% else %}
+                    <div class="mini-note">Keterangan komunitas belum tersedia.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="graph-box">
+                <div class="network-title">
+                    <h3>Jejaring Kesamaan Peminjaman Anggota</h3>
+                    <span class="network-badge">Ukuran = degree centrality</span>
                 </div>
 
-                <div class="graph-box">
-                    <div class="network-title">
-                        <h3>User Borrowing Similarity Network</h3>
-                        <span class="network-badge">Size = degree centrality</span>
-                    </div>
-                    <img src="{{ url_for('static', filename='graphs/' + member_graph) }}" alt="User Borrowing Similarity Network">
+                <img src="{{ url_for('static', filename='graphs/' + member_graph) }}" alt="Jejaring Kesamaan Peminjaman Anggota">
 
-                    <div class="community-legend">
-                        <div class="community-legend-title">User community legend</div>
-                        {% if member_community_summary %}
-                        <div class="legend-grid">
-                            {% for c in member_community_summary %}
-                            <div class="legend-item">
-                                <span class="legend-dot" style="background: {{ c.color }}"></span>
-                                <div class="legend-meta">
-                                    <strong>Community {{ c.community }} · {{ c.nodes }} nodes</strong>
-                                    <span>{{ c.examples }}</span>
-                                </div>
+                <div class="community-box">
+                    {% if member_community_summary %}
+                    <div class="community-grid-color">
+                        {% for c in member_community_summary %}
+                        <div class="community-item">
+                            <span class="community-dot" style="background: {{ c.color }}"></span>
+                            <div class="community-meta">
+                                <strong>Komunitas {{ c.community }} · {{ c.nodes }} node</strong>
+                                <span>{{ c.examples }}</span>
                             </div>
-                            {% endfor %}
                         </div>
-                        {% else %}
-                        <div class="mini-note">Community legend is not available.</div>
-                        {% endif %}
+                        {% endfor %}
                     </div>
+                    {% else %}
+                    <div class="mini-note">Keterangan komunitas belum tersedia.</div>
+                    {% endif %}
                 </div>
             </div>
-        </section>
-
-        <section class="card">
-            <h2>Unduh Data Analisis</h2>
-            <div class="download-group">
-                <a class="download-link" href="{{ url_for('download_file', filename=excel_file) }}">Laporan Excel</a>
-                <a class="download-link" href="{{ url_for('download_file', filename=gexf_books) }}">GEXF Buku</a>
-                <a class="download-link" href="{{ url_for('download_file', filename=gexf_members) }}">GEXF Peminjam</a>
-            </div>
-        </section>
-
-        <div class="data-grid">
-            <section class="card">
-                <h2>Koleksi Prioritas</h2>
-                <div class="table-wrap">{{ book_table|safe }}</div>
-            </section>
-
-            <section class="card">
-                <h2>Peminjam Sentral</h2>
-                <div class="table-wrap">{{ member_table|safe }}</div>
-            </section>
-
-            <section class="card">
-                <h2>Kelompok Pengguna Aktif</h2>
-                <div class="table-wrap">{{ kelompok_table|safe }}</div>
-            </section>
-
-            <section class="card">
-                <h2>Tren Sirkulasi Bulanan</h2>
-                <div class="table-wrap">{{ monthly_table|safe }}</div>
-            </section>
-
-            <section class="card">
-                <h2>Top Judul</h2>
-                <div class="table-wrap">{{ top_titles_table|safe }}</div>
-            </section>
-
-            <section class="card">
-                <h2>Top Peminjam</h2>
-                <div class="table-wrap">{{ top_members_table|safe }}</div>
-            </section>
         </div>
+    </section>
 
-        <section class="card">
-            <h2>Komunitas Minat Baca</h2>
-            {% if communities %}
-            <div class="community-grid">
-                {% for c in communities %}
-                <div class="community">
-                    <strong>Komunitas {{ c.Community }}</strong><br>
-                    Jumlah node: {{ c.JumlahNode }}<br>
-                    {{ c.ContohAnggota }}
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-                <p>Belum terbentuk komunitas dari data yang dianalisis.</p>
-            {% endif %}
-        </section>
-
-        <section class="card">
-            <h2>Catatan Analitik</h2>
-            {% if insights %}
-                <ul class="insight-list">
-                    {% for item in insights %}
-                    <li>{{ item }}</li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Catatan analisis belum tersedia.</p>
-            {% endif %}
-        </section>
-
-        <div class="site-footer">
-            © 2026 Tedy Setiadi • LIBNIS MAM — Library Network Intelligence System
+    <section class="card">
+        <h2>Unduh Data Analisis</h2>
+        <div class="download-group">
+            <a class="download-link" href="{{ url_for('download_file', filename=excel_file) }}">Laporan Excel</a>
+            <a class="download-link" href="{{ url_for('download_file', filename=gexf_books) }}">GEXF Buku</a>
+            <a class="download-link" href="{{ url_for('download_file', filename=gexf_members) }}">GEXF Peminjam</a>
         </div>
+    </section>
+
+    <div class="data-grid">
+        <section class="card">
+            <h2>Koleksi Prioritas</h2>
+            <div class="table-wrap">{{ book_table|safe }}</div>
+        </section>
+
+        <section class="card">
+            <h2>Peminjam Sentral</h2>
+            <div class="table-wrap">{{ member_table|safe }}</div>
+        </section>
+
+        <section class="card">
+            <h2>Kelompok Pengguna Aktif</h2>
+            <div class="table-wrap">{{ kelompok_table|safe }}</div>
+        </section>
+
+        <section class="card">
+            <h2>Tren Sirkulasi Bulanan</h2>
+            <div class="table-wrap">{{ monthly_table|safe }}</div>
+        </section>
+
+        <section class="card">
+            <h2>Judul Paling Sering Dipinjam</h2>
+            <div class="table-wrap">{{ top_titles_table|safe }}</div>
+        </section>
+
+        <section class="card">
+            <h2>Peminjam Paling Aktif</h2>
+            <div class="table-wrap">{{ top_members_table|safe }}</div>
+        </section>
+    </div>
+
+    <section class="card">
+        <h2>Komunitas Minat Baca</h2>
+        {% if communities %}
+        <div class="community-grid">
+            {% for c in communities %}
+            <div class="community">
+                <strong>Komunitas {{ c.Community }}</strong><br>
+                Jumlah node: {{ c.JumlahNode }}<br>
+                {{ c.ContohAnggota }}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>Belum terbentuk komunitas dari data yang dianalisis.</p>
         {% endif %}
-    </main>
-</div>
+    </section>
+
+    <section class="card">
+        <h2>Catatan Analitik</h2>
+        {% if insights %}
+        <ul class="insight-list">
+            {% for item in insights %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>Catatan analisis belum tersedia.</p>
+        {% endif %}
+    </section>
+
+    <div class="site-footer">
+        © 2026 Tedy Setiadi<br>
+        LIBNIS MAM — Sistem Analisis Jejaring Perpustakaan
+    </div>
+    {% endif %}
+
+</main>
 
 <script>
     const form = document.getElementById("analysisForm");
@@ -867,8 +833,8 @@
     const steps = {{ processing_steps|default([
         'Membaca file Excel...',
         'Membersihkan dan memfilter data...',
-        'Membangun jaringan buku...',
-        'Membangun jaringan peminjam...',
+        'Membangun jejaring koleksi...',
+        'Membangun jejaring peminjam...',
         'Menghitung degree centrality...',
         'Mendeteksi komunitas...',
         'Membuat visualisasi graf...',
@@ -885,7 +851,10 @@
             const timer = setInterval(function () {
                 if (percent < 92) {
                     percent += Math.floor(Math.random() * 7) + 3;
-                    if (percent > 92) percent = 92;
+
+                    if (percent > 92) {
+                        percent = 92;
+                    }
 
                     stepIndex = Math.min(
                         steps.length - 1,
