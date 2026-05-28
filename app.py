@@ -1,5 +1,4 @@
 
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
 import uuid
@@ -90,14 +89,44 @@ def _enrich_graph_with_visual_attributes(G):
     return degree_dict, degree_centrality, communities
 
 
-def _community_summary(communities):
-    grouped = defaultdict(int)
-    for _, comm_id in communities.items():
-        grouped[comm_id] += 1
-    return [
-        {"community": comm_id, "nodes": count}
-        for comm_id, count in sorted(grouped.items(), key=lambda x: (-x[1], x[0]))
-    ]
+def _community_summary(communities, G=None, max_items=12, max_examples=4):
+    """Ringkasan komunitas untuk legenda warna di dashboard.
+
+    Output dibuat kompatibel dengan template:
+    - community: nomor komunitas berbasis 1 untuk tampilan
+    - raw_community: id komunitas asli dari NetworkX
+    - nodes: jumlah node dalam komunitas
+    - color: warna yang sama dengan node pada visualisasi
+    - examples: contoh label node
+    """
+    grouped = defaultdict(list)
+    for node, comm_id in communities.items():
+        grouped[comm_id].append(node)
+
+    rows = []
+    for comm_id, nodes in sorted(grouped.items(), key=lambda x: (-len(x[1]), x[0])):
+        color = "#4C78A8"
+        examples = []
+
+        if G is not None:
+            for node in nodes:
+                if node in G.nodes:
+                    color = G.nodes[node].get("visual_color", color)
+                    label = G.nodes[node].get("label", node)
+                    if label not in examples:
+                        examples.append(label)
+                    if len(examples) >= max_examples:
+                        break
+
+        rows.append({
+            "community": int(comm_id) + 1,
+            "raw_community": int(comm_id),
+            "nodes": len(nodes),
+            "color": color,
+            "examples": ", ".join(examples) if examples else "-"
+        })
+
+    return rows[:max_items]
 
 
 def draw_graph_to_file(G, filepath, title, max_nodes=90, max_labels=25):
@@ -143,13 +172,45 @@ def draw_graph_to_file(G, filepath, title, max_nodes=90, max_labels=25):
         labels = {n: G_plot.nodes[n].get("label", n) for n in G_plot.nodes()}
         nx.draw_networkx_labels(G_plot, pos, labels=labels, font_size=7)
 
-    comm_count = len(set(nx.get_node_attributes(G_plot, "community").values()))
+    comm_values = sorted(set(nx.get_node_attributes(G_plot, "community").values()))
+    comm_count = len(comm_values)
     plt.title(
         f"{title}\n"
-        f"Node={G_plot.number_of_nodes()} | Edge={G_plot.number_of_edges()} | Komunitas={comm_count}\n"
-        "Warna = komunitas | Ukuran node = degree centrality",
+        f"Node={G_plot.number_of_nodes()} | Edge={G_plot.number_of_edges()} | Communities={comm_count}\n"
+        "Color = community | Node size = degree centrality",
         fontsize=13,
     )
+
+    # Legend warna komunitas ditampilkan langsung di gambar untuk konsistensi
+    # dengan keterangan pada dashboard dan file GEXF.
+    legend_handles = []
+    for comm_id in comm_values[:12]:
+        sample_node = next((n for n in G_plot.nodes() if G_plot.nodes[n].get("community") == comm_id), None)
+        if sample_node is not None:
+            color = G_plot.nodes[sample_node].get("visual_color", "#4C78A8")
+            legend_handles.append(
+                plt.Line2D(
+                    [0], [0],
+                    marker="o",
+                    color="w",
+                    label=f"Community {int(comm_id) + 1}",
+                    markerfacecolor=color,
+                    markeredgecolor="white",
+                    markersize=8,
+                )
+            )
+
+    if legend_handles:
+        plt.legend(
+            handles=legend_handles,
+            loc="lower left",
+            bbox_to_anchor=(0.0, 0.0),
+            frameon=True,
+            fontsize=8,
+            title="Community color",
+            title_fontsize=9,
+        )
+
     plt.axis("off")
     plt.tight_layout()
     plt.savefig(filepath, bbox_inches="tight", dpi=180)
@@ -229,12 +290,12 @@ def index():
             draw_graph_to_file(
                 G_books,
                 os.path.join(GRAPH_FOLDER, book_graph_file),
-                "Peta Komunitas Koleksi Buku",
+                "Collection Relationship Network",
             )
             draw_graph_to_file(
                 G_members,
                 os.path.join(GRAPH_FOLDER, member_graph_file),
-                "Peta Komunitas Peminjam",
+                "User Borrowing Similarity Network",
             )
 
             excel_path = os.path.join(OUTPUT_FOLDER, f"laporan_libnis_mam_{unique_id}.xlsx")
@@ -266,8 +327,8 @@ def index():
                 top_titles_table=top_titles_df.to_html(classes="table table-striped", index=False),
                 top_members_table=top_members_df.to_html(classes="table table-striped", index=False),
                 communities=communities,
-                book_community_summary=_community_summary(book_communities),
-                member_community_summary=_community_summary(member_communities),
+                book_community_summary=_community_summary(book_communities, G_books),
+                member_community_summary=_community_summary(member_communities, G_members),
                 book_graph=book_graph_file,
                 member_graph=member_graph_file,
                 excel_file=os.path.basename(excel_path),
