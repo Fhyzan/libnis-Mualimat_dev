@@ -1,11 +1,36 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+engine_web.py - LIBNIS MAM
+
+Engine analitik untuk:
+1. Membaca dan membersihkan data sirkulasi perpustakaan.
+2. Membangun jaringan koleksi buku dan jaringan peminjam.
+3. Menghitung metrik SNA.
+4. Mendeteksi komunitas.
+5. Menambahkan atribut visual:
+   - community
+   - degree
+   - weighted_degree
+   - degree_centrality
+   - visual_size
+   - visual_color
+
+Catatan kompatibilitas:
+- Fungsi lama tetap dipertahankan agar cocok dengan app.py sebelumnya.
+- Fungsi enrich_graph_visualization() ditambahkan agar cocok dengan app.py versi baru.
+"""
+
 import os
 from itertools import combinations
 
 import pandas as pd
 import networkx as nx
 
+
+# ==========================================================
+# Basic data utilities
+# ==========================================================
 
 def clean_text(x):
     if pd.isna(x):
@@ -46,6 +71,10 @@ def ensure_datetime(series):
     return pd.to_datetime(series, errors="coerce")
 
 
+# ==========================================================
+# Loading and filtering
+# ==========================================================
+
 def load_data(file_path_or_buffer):
     required_aliases = {
         "MemberID": ["ID Anggota", "Id Anggota", "No Anggota", "No. Anggota", "Nomor Anggota", "Member ID"],
@@ -54,7 +83,7 @@ def load_data(file_path_or_buffer):
         "Title": ["Judul", "Judul Buku", "Nama Buku", "Title"],
         "BorrowDate": ["Tanggal Pinjam", "Tgl Pinjam", "Borrow Date", "Tanggal Peminjaman"],
         "ReturnDate": ["Tanggal Kembali", "Tgl Kembali", "Return Date"],
-        "Status": ["Status peminjaman", "Status", "Loan Status"]
+        "Status": ["Status peminjaman", "Status", "Loan Status"],
     }
 
     raw = pd.read_excel(file_path_or_buffer, header=0)
@@ -68,9 +97,14 @@ def load_data(file_path_or_buffer):
         return None
 
     chosen = {k: pick_col(k) for k in required_aliases}
-    missing = [k for k, v in chosen.items() if v is None and k in ["MemberID", "MemberName", "CopyCode", "Title", "BorrowDate"]]
+    missing = [
+        k for k, v in chosen.items()
+        if v is None and k in ["MemberID", "MemberName", "CopyCode", "Title", "BorrowDate"]
+    ]
     if missing:
-        raise ValueError(f"Kolom wajib tidak ditemukan: {missing}. Kolom terbaca: {list(raw.columns)}")
+        raise ValueError(
+            f"Kolom wajib tidak ditemukan: {missing}. Kolom terbaca: {list(raw.columns)}"
+        )
 
     use_cols = [v for v in chosen.values() if v is not None]
     df = raw[use_cols].copy()
@@ -95,7 +129,7 @@ def load_data(file_path_or_buffer):
     df["KelompokAnggota"] = df["MemberID"].apply(infer_kelompok_anggota)
     df["BorrowMonth"] = df["BorrowDate"].dt.to_period("M").astype(str)
 
-    # untuk analisis pola bacaan gunakan Judul, bukan Kode Eksemplar
+    # Untuk analisis pola bacaan gunakan Judul, bukan Kode Eksemplar.
     df["book_node"] = "B_" + df["Title"].str.lower().str.strip()
     df["member_node"] = "M_" + df["MemberID"].astype(str)
 
@@ -117,8 +151,14 @@ def filter_data(df, start_date=None, end_date=None, kelompok=None, status=None):
     return out
 
 
+# ==========================================================
+# Graph construction
+# ==========================================================
+
 def build_book_graph(df):
+    """Jaringan buku: dua buku terhubung jika pernah dipinjam oleh anggota yang sama."""
     G = nx.Graph()
+
     for book_node, title in df[["book_node", "Title"]].drop_duplicates().itertuples(index=False):
         G.add_node(book_node, label=title, kind="Buku")
 
@@ -129,13 +169,24 @@ def build_book_graph(df):
                 G[a][b]["weight"] += 1
             else:
                 G.add_edge(a, b, weight=1)
-    return G
+
+    return enrich_graph_visualization(G)
 
 
 def build_member_graph(df):
+    """Jaringan peminjam: dua anggota terhubung jika pernah meminjam buku yang sama."""
     G = nx.Graph()
-    for member_node, member_id, member_name, kelompok in df[["member_node", "MemberID", "MemberName", "KelompokAnggota"]].drop_duplicates().itertuples(index=False):
-        G.add_node(member_node, label=member_name, kind="Anggota", member_id=member_id, kelompok=kelompok)
+
+    for member_node, member_id, member_name, kelompok in df[
+        ["member_node", "MemberID", "MemberName", "KelompokAnggota"]
+    ].drop_duplicates().itertuples(index=False):
+        G.add_node(
+            member_node,
+            label=member_name,
+            kind="Anggota",
+            member_id=member_id,
+            kelompok=kelompok,
+        )
 
     grouped = df.groupby("book_node")["member_node"].apply(lambda x: list(dict.fromkeys(x)))
     for members in grouped:
@@ -144,19 +195,167 @@ def build_member_graph(df):
                 G[a][b]["weight"] += 1
             else:
                 G.add_edge(a, b, weight=1)
+
+    return enrich_graph_visualization(G)
+
+
+# ==========================================================
+# Community and visual attributes
+# ==========================================================
+
+VISUAL_PALETTE = [
+    "#2563eb", "#dc2626", "#16a34a", "#9333ea", "#f97316",
+    "#0891b2", "#ca8a04", "#db2777", "#4f46e5", "#059669",
+    "#7c3aed", "#ea580c", "#0f766e", "#be123c", "#65a30d",
+    "#1d4ed8", "#b91c1c", "#047857", "#a21caf", "#0369a1",
+]
+
+
+def get_community_map(G):
+    """Return dict node -> community id.
+
+    Aman untuk graf kosong, graf tanpa edge, dan graf kecil.
+    """
+    if G.number_of_nodes() == 0:
+        return {}
+
+    if G.number_of_edges() == 0:
+        return {node: idx for idx, node in enumerate(G.nodes())}
+
+    try:
+        communities = nx.community.greedy_modularity_communities(G, weight="weight")
+    except Exception:
+        communities = nx.connected_components(G)
+
+    community_map = {}
+    for idx, comm in enumerate(communities):
+        for node in comm:
+            community_map[node] = idx
+
+    next_idx = max(community_map.values(), default=-1) + 1
+    for node in G.nodes():
+        if node not in community_map:
+            community_map[node] = next_idx
+            next_idx += 1
+
+    return community_map
+
+
+def get_degree_sizes(G, min_size=180, max_size=1600):
+    """Return dict node -> visual size based on degree centrality."""
+    if G.number_of_nodes() == 0:
+        return {}
+
+    dc = nx.degree_centrality(G)
+    max_dc = max(dc.values(), default=0)
+
+    sizes = {}
+    for node, val in dc.items():
+        if max_dc > 0:
+            norm = val / max_dc
+        else:
+            norm = 0
+        sizes[node] = float(min_size + norm * (max_size - min_size))
+
+    return sizes
+
+
+def enrich_graph_visualization(G, min_size=180, max_size=1600):
+    """Tambahkan atribut visual ke node dan edge.
+
+    Atribut node:
+    - degree
+    - weighted_degree
+    - degree_centrality
+    - community
+    - visual_size
+    - degree_size
+    - visual_color
+    - color
+
+    Atribut edge:
+    - weight tetap dipertahankan.
+    """
+    if G is None:
+        return nx.Graph()
+
+    if G.number_of_nodes() == 0:
+        return G
+
+    community_map = get_community_map(G)
+    degree = dict(G.degree())
+    weighted_degree = dict(G.degree(weight="weight"))
+    degree_centrality = nx.degree_centrality(G)
+    degree_sizes = get_degree_sizes(G, min_size=min_size, max_size=max_size)
+
+    for node in G.nodes():
+        comm = int(community_map.get(node, 0))
+        color = VISUAL_PALETTE[comm % len(VISUAL_PALETTE)]
+
+        G.nodes[node]["degree"] = int(degree.get(node, 0))
+        G.nodes[node]["weighted_degree"] = float(weighted_degree.get(node, 0))
+        G.nodes[node]["degree_centrality"] = float(degree_centrality.get(node, 0))
+        G.nodes[node]["community"] = comm
+        G.nodes[node]["visual_size"] = float(degree_sizes.get(node, min_size))
+        G.nodes[node]["degree_size"] = float(degree_sizes.get(node, min_size))
+        G.nodes[node]["visual_color"] = color
+        G.nodes[node]["color"] = color
+
     return G
 
 
+def detect_communities(G):
+    """Ringkasan komunitas dalam format lama untuk template."""
+    if G.number_of_nodes() == 0:
+        return []
+
+    G = enrich_graph_visualization(G)
+    community_map = get_community_map(G)
+
+    grouped = {}
+    for node, comm_id in community_map.items():
+        grouped.setdefault(comm_id, []).append(node)
+
+    result = []
+    for idx, (comm_id, nodes) in enumerate(
+        sorted(grouped.items(), key=lambda item: (-len(item[1]), item[0])),
+        start=1,
+    ):
+        labels = [G.nodes[n].get("label", n) for n in nodes]
+        result.append({
+            "Community": idx,
+            "CommunityID": int(comm_id),
+            "JumlahNode": len(nodes),
+            "ContohAnggota": ", ".join(labels[:8]) + (" ..." if len(labels) > 8 else ""),
+        })
+
+    return result
+
+
+def detect_isolated(G):
+    return [G.nodes[n].get("label", n) for n in G.nodes() if G.degree(n) == 0]
+
+
+# ==========================================================
+# Metrics and summary tables
+# ==========================================================
+
 def compute_metrics(G):
+    G = enrich_graph_visualization(G)
+
     if G.number_of_nodes() == 0:
         return pd.DataFrame(columns=[
             "KodeNode",
             "Nama",
+            "Komunitas",
+            "Ukuran Node",
+            "Warna Node",
             "Jumlah Keterhubungan",
             "Intensitas Keterhubungan",
+            "Degree Centrality",
             "Peran Penghubung",
             "Kedekatan Akses",
-            "Skor Prioritas Koleksi"
+            "Skor Prioritas Koleksi",
         ])
 
     degree = dict(G.degree())
@@ -173,13 +372,19 @@ def compute_metrics(G):
         wdeg = weighted_degree.get(node, 0)
         bet = betweenness.get(node, 0.0)
         clo = closeness.get(node, 0.0)
+        dc = G.nodes[node].get("degree_centrality", 0.0)
+
         skor = (deg / max_deg if max_deg else 0) + (bet / max_bet if max_bet else 0)
 
         rows.append({
             "KodeNode": node,
             "Nama": G.nodes[node].get("label", node),
+            "Komunitas": int(G.nodes[node].get("community", 0)),
+            "Ukuran Node": float(G.nodes[node].get("visual_size", 180)),
+            "Warna Node": G.nodes[node].get("visual_color", "#2563eb"),
             "Jumlah Keterhubungan": int(deg),
             "Intensitas Keterhubungan": float(wdeg),
+            "Degree Centrality": float(dc),
             "Peran Penghubung": float(bet),
             "Kedekatan Akses": float(clo),
             "Skor Prioritas Koleksi": float(skor),
@@ -187,28 +392,8 @@ def compute_metrics(G):
 
     return pd.DataFrame(rows).sort_values(
         ["Skor Prioritas Koleksi", "Intensitas Keterhubungan"],
-        ascending=False
+        ascending=False,
     )
-
-
-def detect_isolated(G):
-    return [G.nodes[n].get("label", n) for n in G.nodes() if G.degree(n) == 0]
-
-
-def detect_communities(G):
-    if G.number_of_nodes() == 0 or G.number_of_edges() == 0:
-        return []
-
-    communities = nx.community.greedy_modularity_communities(G, weight="weight")
-    result = []
-    for idx, comm in enumerate(communities, start=1):
-        labels = [G.nodes[n].get("label", n) for n in comm]
-        result.append({
-            "Community": idx,
-            "JumlahNode": len(comm),
-            "ContohAnggota": ", ".join(labels[:8]) + (" ..." if len(labels) > 8 else "")
-        })
-    return result
 
 
 def kelompok_stats(df):
@@ -257,7 +442,7 @@ def top_members(df, n=10):
     out.rename(columns={
         "MemberID": "ID Anggota",
         "MemberName": "Nama Anggota",
-        "KelompokAnggota": "Kelompok Pengguna"
+        "KelompokAnggota": "Kelompok Pengguna",
     }, inplace=True)
     return out
 
@@ -303,7 +488,12 @@ def generate_library_insights(df, book_metrics, member_metrics):
     return insights
 
 
+# ==========================================================
+# Export
+# ==========================================================
+
 def export_excel(output_path, sheets):
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
         for name, df in sheets.items():
             df.to_excel(writer, sheet_name=name[:31], index=False)
@@ -311,4 +501,5 @@ def export_excel(output_path, sheets):
 
 def export_gexf(G, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    G = enrich_graph_visualization(G)
     nx.write_gexf(G, path)
