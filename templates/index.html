@@ -3,162 +3,145 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>LIBNIS MAM</title>
+    <title>{{ app_title|default('LIBNIS MAM') }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
         :root {
             --primary: #0f6b3f;
-            --primary-dark: #0b4f2f;
-            --secondary: #f4b400;
-            --bg: #f3f6f9;
+            --primary-dark: #083b25;
+            --primary-soft: #e8f5ee;
+            --accent: #f4b400;
+            --bg: #eef3f7;
             --card: #ffffff;
-            --text: #1f2937;
+            --text: #172033;
             --muted: #6b7280;
             --border: #e5e7eb;
             --success-bg: #e8f5e9;
             --success-text: #1b5e20;
             --danger-bg: #fdecea;
             --danger-text: #b3261e;
-            --shadow: 0 6px 18px rgba(0,0,0,0.08);
-            --radius: 16px;
+            --shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+            --radius: 18px;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
             font-family: "Segoe UI", Arial, sans-serif;
-            background: var(--bg);
+            background:
+                radial-gradient(circle at top left, rgba(15,107,63,0.16), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(244,180,0,0.12), transparent 24%),
+                var(--bg);
             color: var(--text);
         }
 
         .layout {
-            display: flex;
+            display: grid;
+            grid-template-columns: 170px minmax(0, 1fr);
             min-height: 100vh;
         }
 
         .sidebar {
-            width: 260px;
             background: linear-gradient(180deg, var(--primary-dark), var(--primary));
             color: white;
-            padding: 24px 18px;
+            padding: 22px 14px;
             position: sticky;
             top: 0;
             height: 100vh;
-        }
-
-        .brand {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 14px;
-            margin-bottom: 28px;
-        }
-
-        .brand img {
-            width: 62px;
-            height: 62px;
-            object-fit: contain;
-            background: white;
-            border-radius: 12px;
-            padding: 6px;
-        }
-
-        .brand h2 {
-            margin: 0;
-            font-size: 20px;
-            line-height: 1.2;
-        }
-
-        .brand p {
-            margin: 4px 0 0 0;
-            font-size: 12px;
-            opacity: 0.9;
-        }
-
-        .sidebar-section {
-            margin-top: 22px;
-        }
-
-        .sidebar-section h4 {
-            margin: 0 0 10px 0;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            opacity: 0.9;
-        }
-
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .sidebar li {
-            padding: 10px 12px;
-            border-radius: 10px;
-            margin-bottom: 8px;
-            background: rgba(255,255,255,0.08);
-            font-size: 14px;
-        }
-
-        .sidebar-footer {
-            margin-top: 28px;
-            padding: 12px;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.08);
-            font-size: 12px;
-            line-height: 1.5;
-        }
-
-        .main {
-            flex: 1;
-            padding: 28px;
-        }
-
-        .topbar {
-            background: white;
-            border-radius: var(--radius);
-            padding: 22px 24px;
-            box-shadow: var(--shadow);
-            margin-bottom: 22px;
-            display: flex;
             justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .topbar h1 {
-            margin: 0;
-            font-size: 28px;
-            color: var(--primary-dark);
-        }
-
-        .topbar p {
-            margin: 6px 0 0 0;
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 8px 12px;
-            background: #eef7f1;
-            color: var(--primary-dark);
-            border: 1px solid #d9ebdf;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
             text-align: center;
         }
 
-        .alert-success, .alert-danger {
-            padding: 14px 16px;
-            border-radius: 12px;
+        .brand img {
+            width: 92px;
+            height: 92px;
+            object-fit: contain;
+            background: white;
+            border-radius: 22px;
+            padding: 9px;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+        }
+
+        .brand h1 {
+            margin: 16px 0 4px 0;
+            font-size: 22px;
+            line-height: 1.05;
+            letter-spacing: 0.5px;
+        }
+
+        .brand small {
+            display: block;
+            opacity: 0.86;
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .side-chip {
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 12px 8px;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .main {
+            min-width: 0;
+            padding: 22px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 16px;
+            align-items: center;
+            background: rgba(255,255,255,0.82);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.72);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 18px 20px;
             margin-bottom: 18px;
+        }
+
+        .hero h2 {
+            margin: 0;
+            font-size: 24px;
+            color: var(--primary-dark);
+        }
+
+        .hero p {
+            margin: 5px 0 0 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+            border: 1px solid #cce7d8;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .alert-success, .alert-danger {
+            padding: 13px 15px;
+            border-radius: 14px;
+            margin-bottom: 16px;
             font-size: 14px;
+            box-shadow: var(--shadow);
         }
 
         .alert-success {
@@ -174,11 +157,12 @@
         }
 
         .card {
-            background: var(--card);
+            background: rgba(255,255,255,0.92);
+            border: 1px solid rgba(229,231,235,0.86);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
-            padding: 22px;
-            margin-bottom: 22px;
+            padding: 18px;
+            margin-bottom: 18px;
         }
 
         .card h2, .card h3 {
@@ -186,16 +170,31 @@
             color: var(--primary-dark);
         }
 
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 14px;
+        }
+
+        .card h3 {
+            font-size: 15px;
+            margin-bottom: 10px;
+        }
+
+        .upload-card {
+            border-left: 5px solid var(--primary);
+        }
+
         .filter-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
+            grid-template-columns: 1.4fr repeat(4, 1fr);
+            gap: 12px;
+            align-items: end;
         }
 
         .field label {
             display: block;
-            font-weight: 600;
-            font-size: 13px;
+            font-weight: 700;
+            font-size: 12px;
             margin-bottom: 6px;
             color: #374151;
         }
@@ -205,38 +204,45 @@
             width: 100%;
             padding: 11px 12px;
             border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 14px;
+            border-radius: 12px;
+            font-size: 13px;
             background: #fff;
+            outline: none;
+        }
+
+        .field input:focus,
+        .field select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15,107,63,0.10);
         }
 
         .btn {
+            width: 100%;
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
             border: none;
-            border-radius: 10px;
-            padding: 12px 18px;
+            border-radius: 12px;
+            padding: 12px 16px;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 800;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(15,107,63,0.25);
+            box-shadow: 0 6px 16px rgba(15,107,63,0.25);
         }
 
-        .btn:hover {
-            opacity: 0.95;
-        }
+        .btn:hover { opacity: 0.96; }
 
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
+            gap: 14px;
         }
 
         .kpi-card {
-            background: linear-gradient(180deg, #ffffff, #f9fbfc);
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
             border: 1px solid #edf0f2;
-            border-radius: 16px;
-            padding: 20px;
+            border-radius: 18px;
+            padding: 18px;
+            min-height: 110px;
         }
 
         .kpi-label {
@@ -246,90 +252,123 @@
         }
 
         .kpi-value {
-            font-size: 30px;
-            font-weight: 700;
+            font-size: 34px;
+            font-weight: 850;
             color: var(--primary-dark);
+            letter-spacing: -1px;
         }
 
-        .download-group {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .download-link {
-            display: inline-block;
-            text-decoration: none;
-            background: #198754;
-            color: white;
-            padding: 11px 15px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .download-link:hover {
-            opacity: 0.92;
-        }
-
-        .two-col {
+        .visual-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 18px;
+        }
+
+        .graph-box {
+            min-width: 0;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 12px;
         }
 
         .graph-box img {
             width: 100%;
+            min-height: 420px;
+            max-height: 640px;
+            object-fit: contain;
+            border-radius: 14px;
+            background: #fff;
+            display: block;
+        }
+
+        .mini-note {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: -4px;
+            margin-bottom: 10px;
+        }
+
+        .download-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .download-link {
+            display: inline-flex;
+            text-decoration: none;
+            background: #198754;
+            color: white;
+            padding: 10px 13px;
             border-radius: 12px;
-            border: 1px solid var(--border);
-            background: white;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .download-link:nth-child(2),
+        .download-link:nth-child(3) {
+            background: #0f6b3f;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
         }
 
         .table-wrap {
             overflow-x: auto;
-            border-radius: 12px;
+            border-radius: 14px;
             border: 1px solid var(--border);
+            max-height: 420px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            font-size: 13px;
             background: white;
         }
 
         th, td {
             border-bottom: 1px solid #eef0f2;
-            padding: 10px 12px;
+            padding: 9px 10px;
             text-align: left;
             vertical-align: top;
         }
 
         th {
             background: #f7f9fb;
-            font-weight: 700;
+            font-weight: 800;
             color: #374151;
             position: sticky;
             top: 0;
+            z-index: 1;
         }
 
-        tr:hover td {
-            background: #fbfcfd;
+        tr:hover td { background: #fbfcfd; }
+
+        .community-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
         }
 
         .community {
-            padding: 14px 16px;
-            border-radius: 12px;
+            padding: 13px 14px;
+            border-radius: 14px;
             background: #fff9e8;
             border: 1px solid #f2df9a;
-            margin-bottom: 10px;
-            font-size: 14px;
+            font-size: 13px;
+            line-height: 1.55;
         }
 
-        .footer-note {
-            font-size: 13px;
-            color: var(--muted);
-            margin-top: 10px;
+        .insight-list {
+            margin: 0;
+            padding-left: 18px;
+            line-height: 1.75;
+            font-size: 14px;
         }
 
         .site-footer {
@@ -340,95 +379,170 @@
             line-height: 1.7;
         }
 
-        @media (max-width: 1100px) {
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 59, 37, 0.78);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .loading-panel {
+            width: min(520px, 100%);
+            background: white;
+            border-radius: 24px;
+            padding: 26px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.28);
+            text-align: center;
+        }
+
+        .loading-panel h3 {
+            margin: 0 0 8px 0;
+            color: var(--primary-dark);
+            font-size: 22px;
+        }
+
+        .loading-panel p {
+            margin: 0 0 16px 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 16px;
+            background: #e5e7eb;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 999px;
+            transition: width 0.35s ease;
+        }
+
+        .progress-text {
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .progress-step {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 1180px) {
             .filter-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
-
-            .two-col {
+            .visual-grid,
+            .data-grid,
+            .community-grid {
                 grid-template-columns: 1fr;
             }
-
-            .kpi-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .layout {
-                flex-direction: column;
-            }
-
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
+            .graph-box img {
+                min-height: 340px;
             }
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 760px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                height: auto;
+                min-height: auto;
+                position: relative;
+                flex-direction: row;
+                justify-content: center;
+                gap: 16px;
+                padding: 14px;
+            }
+
+            .brand {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                text-align: left;
+            }
+
+            .brand img {
+                width: 58px;
+                height: 58px;
+                border-radius: 14px;
+            }
+
+            .brand h1 {
+                margin: 0;
+                font-size: 18px;
+            }
+
+            .side-chip {
+                display: none;
+            }
+
             .main {
-                padding: 16px;
+                padding: 14px;
             }
 
-            .topbar {
-                flex-direction: column;
-                align-items: flex-start;
+            .hero {
+                grid-template-columns: 1fr;
             }
 
-            .filter-grid {
+            .filter-grid,
+            .kpi-grid {
                 grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
+
 <body>
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-panel">
+        <h3>Memproses Data LIBNIS MAM</h3>
+        <p>Graf koleksi dan peminjam sedang dibangun. Kopi boleh, panik jangan.</p>
+        <div class="progress-track">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">0%</div>
+        <div class="progress-step" id="progressStep">Menyiapkan proses analisis...</div>
+    </div>
+</div>
+
 <div class="layout">
     <aside class="sidebar">
         <div class="brand">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Mu'allimat">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo LIBNIS MAM">
             <div>
-                <h2>LIBNIS MAM</h2>
-                <p>Mu'allimat Yogyakarta</p>
+                <h1>LIBNIS<br>MAM</h1>
+                <small>Library Network Intelligence System</small>
             </div>
         </div>
-
-        <div class="sidebar-section">
-            <h4>Fungsi Sistem</h4>
-            <ul>
-                <li>Ringkasan sirkulasi</li>
-                <li>Peta keterkaitan koleksi</li>
-                <li>Peta minat baca anggota</li>
-                <li>Kelompok minat baca</li>
-                <li>Laporan pengembangan koleksi</li>
-            </ul>
-        </div>
-
-        <div class="sidebar-section">
-            <h4>Manfaat bagi Perpustakaan</h4>
-            <ul>
-                <li>Membantu evaluasi koleksi</li>
-                <li>Membaca kecenderungan minat baca</li>
-                <li>Menentukan prioritas pengadaan</li>
-                <li>Mendukung layanan berbasis data</li>
-                <li>Menyediakan laporan untuk pengambilan keputusan</li>
-            </ul>
-        </div>
-
-        <div class="sidebar-footer">
-            <strong>LIBNIS MAM</strong><br>
-            Sistem Analisis Layanan dan Koleksi Perpustakaan<br><br>
-            Dikembangkan oleh:<br>
-            <strong>Tedy Setiadi</strong><br>
-            Universitas Ahmad Dahlan
+        <div class="side-chip">
+            Visual Graph<br>
+            Community • Centrality • Library Analytics
         </div>
     </aside>
 
     <main class="main">
-        <section class="topbar">
+        <section class="hero">
             <div>
-                <h1>Dashboard Layanan dan Pengembangan Koleksi Perpustakaan</h1>
-                <p>Perpustakaan Madrasah Mu'allimat Muhammadiyah Yogyakarta</p>
+                <h2>Dashboard Visual Jejaring Perpustakaan</h2>
+                <p>Analisis jaringan buku dan peminjam dengan warna komunitas serta ukuran node berbasis degree centrality.</p>
             </div>
-            <div class="badge">Teknologi Tepat Guna • Analisis Sirkulasi dan Minat Baca</div>
+            <div class="badge">LIBNIS MAM • Full Data Visual</div>
         </section>
 
         {% if success %}
@@ -439,9 +553,9 @@
         <div class="alert-danger">{{ error }}</div>
         {% endif %}
 
-        <section class="card">
-            <h2>Unggah Data Sirkulasi dan Atur Penyaringan</h2>
-            <form method="POST" enctype="multipart/form-data">
+        <section class="card upload-card">
+            <h2>Unggah Data dan Jalankan Analisis</h2>
+            <form method="POST" enctype="multipart/form-data" id="analysisForm">
                 <div class="filter-grid">
                     <div class="field">
                         <label>File Excel data sirkulasi</label>
@@ -480,116 +594,109 @@
                     </div>
                 </div>
 
-                <div style="margin-top:18px;">
-                    <button class="btn" type="submit">Tampilkan Analisis</button>
+                <div style="margin-top:14px; max-width:260px;">
+                    <button class="btn" type="submit">Tampilkan Visualisasi</button>
                 </div>
             </form>
         </section>
 
         {% if summary %}
         <section class="card">
-            <h2>Ringkasan Statistik Layanan</h2>
             <div class="kpi-grid">
                 <div class="kpi-card">
-                    <div class="kpi-label">Jumlah transaksi sirkulasi</div>
+                    <div class="kpi-label">Transaksi Sirkulasi</div>
                     <div class="kpi-value">{{ summary.total_transaksi }}</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Jumlah judul koleksi terpinjam</div>
+                    <div class="kpi-label">Judul Terpinjam</div>
                     <div class="kpi-value">{{ summary.total_judul }}</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Jumlah anggota peminjam</div>
+                    <div class="kpi-label">Anggota Peminjam</div>
                     <div class="kpi-value">{{ summary.total_anggota }}</div>
                 </div>
             </div>
         </section>
-        <section class="card">
-            <h2>Unduh Hasil Analisis dan Laporan</h2>
-            <div class="download-group">
-                <a class="download-link" href="{{ url_for('download_file', filename=excel_file) }}">Unduh Laporan Excel</a>
-                <a class="download-link" href="{{ url_for('download_file', filename=gexf_books) }}">Unduh Data Visualisasi Koleksi</a>
-                <a class="download-link" href="{{ url_for('download_file', filename=gexf_members) }}">Unduh Data Visualisasi Anggota</a>
-            </div>
-            <div class="footer-note">
-                File visualisasi dapat dibuka pada Gephi untuk analisis lanjutan.
-            </div>
-        </section>
 
         <section class="card">
-            <h2>Visualisasi Keterkaitan Koleksi dan Minat Baca</h2>
-            <div class="two-col">
+            <h2>Visualisasi Jejaring Buku dan Peminjam</h2>
+            <div class="mini-note">
+                Warna node menunjukkan komunitas. Ukuran node menunjukkan degree centrality: semakin besar node, semakin kuat keterhubungannya.
+            </div>
+            <div class="visual-grid">
                 <div class="graph-box">
-                    <h3>Peta Keterkaitan Koleksi</h3>
+                    <h3>Jaringan Buku</h3>
                     <img src="{{ url_for('static', filename='graphs/' + book_graph) }}" alt="Peta Keterkaitan Koleksi">
                 </div>
                 <div class="graph-box">
-                    <h3>Peta Kesamaan Minat Baca Anggota</h3>
+                    <h3>Jaringan Peminjam</h3>
                     <img src="{{ url_for('static', filename='graphs/' + member_graph) }}" alt="Peta Kesamaan Minat Baca Anggota">
                 </div>
             </div>
         </section>
 
         <section class="card">
-            <h2>Koleksi Prioritas untuk Pengembangan</h2>
-            <div class="table-wrap">
-                {{ book_table|safe }}
+            <h2>Unduh Data Analisis</h2>
+            <div class="download-group">
+                <a class="download-link" href="{{ url_for('download_file', filename=excel_file) }}">Laporan Excel</a>
+                <a class="download-link" href="{{ url_for('download_file', filename=gexf_books) }}">GEXF Buku</a>
+                <a class="download-link" href="{{ url_for('download_file', filename=gexf_members) }}">GEXF Peminjam</a>
             </div>
         </section>
 
-        <section class="card">
-            <h2>Anggota dengan Ragam Bacaan Tinggi</h2>
-            <div class="table-wrap">
-                {{ member_table|safe }}
-            </div>
-        </section>
+        <div class="data-grid">
+            <section class="card">
+                <h2>Koleksi Prioritas</h2>
+                <div class="table-wrap">{{ book_table|safe }}</div>
+            </section>
+
+            <section class="card">
+                <h2>Peminjam Sentral</h2>
+                <div class="table-wrap">{{ member_table|safe }}</div>
+            </section>
+
+            <section class="card">
+                <h2>Kelompok Pengguna Aktif</h2>
+                <div class="table-wrap">{{ kelompok_table|safe }}</div>
+            </section>
+
+            <section class="card">
+                <h2>Tren Sirkulasi Bulanan</h2>
+                <div class="table-wrap">{{ monthly_table|safe }}</div>
+            </section>
+
+            <section class="card">
+                <h2>Top Judul</h2>
+                <div class="table-wrap">{{ top_titles_table|safe }}</div>
+            </section>
+
+            <section class="card">
+                <h2>Top Peminjam</h2>
+                <div class="table-wrap">{{ top_members_table|safe }}</div>
+            </section>
+        </div>
 
         <section class="card">
-            <h2>Kelompok Pengguna Paling Aktif</h2>
-            <div class="table-wrap">
-                {{ kelompok_table|safe }}
-            </div>
-        </section>
-
-        <section class="card">
-            <h2>Tren Sirkulasi Bulanan</h2>
-            <div class="table-wrap">
-                {{ monthly_table|safe }}
-            </div>
-        </section>
-
-        <section class="card">
-            <h2>Judul dengan Frekuensi Peminjaman Tertinggi</h2>
-            <div class="table-wrap">
-                {{ top_titles_table|safe }}
-            </div>
-        </section>
-
-        <section class="card">
-            <h2>Anggota Paling Aktif Meminjam</h2>
-            <div class="table-wrap">
-                {{ top_members_table|safe }}
-            </div>
-        </section>
-
-        <section class="card">
-            <h2>Kelompok Minat Baca Berdasarkan Pola Peminjaman</h2>
+            <h2>Komunitas Minat Baca</h2>
             {% if communities %}
+            <div class="community-grid">
                 {% for c in communities %}
                 <div class="community">
-                    <strong>Kelompok Minat Baca {{ c.Community }}</strong><br>
-                    Jumlah unsur: {{ c.JumlahNode }}<br>
-                    Contoh koleksi atau anggota: {{ c.ContohAnggota }}
+                    <strong>Komunitas {{ c.Community }}</strong><br>
+                    Jumlah node: {{ c.JumlahNode }}<br>
+                    {{ c.ContohAnggota }}
                 </div>
                 {% endfor %}
+            </div>
             {% else %}
-                <p>Belum terbentuk kelompok minat baca dari data yang dianalisis.</p>
+                <p>Belum terbentuk komunitas dari data yang dianalisis.</p>
             {% endif %}
         </section>
+
         <section class="card">
-            <h2>Catatan Ringkas untuk Pustakawan</h2>
+            <h2>Catatan Analitik</h2>
             {% if insights %}
-                <ul style="margin:0; padding-left:18px; line-height:1.8;">
+                <ul class="insight-list">
                     {% for item in insights %}
                     <li>{{ item }}</li>
                     {% endfor %}
@@ -598,14 +705,59 @@
                 <p>Catatan analisis belum tersedia.</p>
             {% endif %}
         </section>
+
         <div class="site-footer">
-            © 2026 Tedy Setiadi<br>
-            <strong>LIBNIS MAM</strong> — Sistem Analisis Layanan dan Koleksi Perpustakaan<br>
-            Universitas Ahmad Dahlan<br>
-            Pengembangan dari LIBNIS (Library Network Intelligence System)<br>
+            © 2026 Tedy Setiadi • LIBNIS MAM — Library Network Intelligence System
         </div>
         {% endif %}
     </main>
 </div>
+
+<script>
+    const form = document.getElementById("analysisForm");
+    const overlay = document.getElementById("loadingOverlay");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+    const progressStep = document.getElementById("progressStep");
+
+    const steps = {{ processing_steps|default([
+        'Membaca file Excel...',
+        'Membersihkan dan memfilter data...',
+        'Membangun jaringan buku...',
+        'Membangun jaringan peminjam...',
+        'Menghitung degree centrality...',
+        'Mendeteksi komunitas...',
+        'Membuat visualisasi graf...',
+        'Menyiapkan laporan dan file GEXF...'
+    ])|tojson }};
+
+    if (form) {
+        form.addEventListener("submit", function () {
+            overlay.style.display = "flex";
+
+            let percent = 0;
+            let stepIndex = 0;
+
+            const timer = setInterval(function () {
+                if (percent < 92) {
+                    percent += Math.floor(Math.random() * 7) + 3;
+                    if (percent > 92) percent = 92;
+
+                    stepIndex = Math.min(
+                        steps.length - 1,
+                        Math.floor((percent / 100) * steps.length)
+                    );
+
+                    progressBar.style.width = percent + "%";
+                    progressText.textContent = percent + "%";
+                    progressStep.textContent = steps[stepIndex];
+                } else {
+                    progressStep.textContent = "Menyelesaikan visualisasi. Mohon tunggu sebentar...";
+                    clearInterval(timer);
+                }
+            }, 520);
+        });
+    }
+</script>
 </body>
 </html>
