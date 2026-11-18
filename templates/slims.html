@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>LIBNIS MAM – Data Live SLIMS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        :root {
+            --primary: #0f6b3f;
+            --primary-dark: #083b25;
+            --primary-soft: #e8f5ee;
+            --accent: #f4b400;
+            --bg: #eef3f7;
+            --card: #ffffff;
+            --text: #172033;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --success-bg: #e8f5e9;
+            --success-text: #1b5e20;
+            --danger-bg: #fdecea;
+            --danger-text: #b3261e;
+            --shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+            --radius: 18px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(15,107,63,0.16), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(244,180,0,0.12), transparent 24%),
+                var(--bg);
+            color: var(--text);
+        }
+
+        .main { min-width: 0; padding: 22px; max-width: 1500px; margin: 0 auto; }
+
+        .top-header {
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 18px; background: rgba(255,255,255,0.88); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.72); border-radius: 24px;
+            box-shadow: var(--shadow); padding: 16px 20px; margin-bottom: 18px;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 14px; }
+        .header-left img {
+            width: 68px; height: 68px; object-fit: contain; background: white;
+            border-radius: 16px; padding: 7px; box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+        .header-left h1 { margin: 0; color: var(--primary-dark); font-size: 26px; letter-spacing: 0.4px; }
+        .header-left small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+
+        .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .mode-btn {
+            text-decoration: none; padding: 9px 15px; border-radius: 999px; font-size: 13px;
+            font-weight: 700; border: 1px solid; white-space: nowrap;
+        }
+        .mode-btn.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+        }
+        .mode-btn.inactive {
+            background: white; color: var(--muted); border-color: var(--border);
+        }
+        .mode-btn.inactive:hover { background: #f5f5f5; }
+        .settings-link {
+            text-decoration: none; background: var(--primary-soft); color: var(--primary-dark);
+            padding: 9px 14px; border-radius: 999px; font-size: 13px; font-weight: 700;
+            border: 1px solid #cce7d8;
+        }
+        .settings-link:hover { background: #d4edde; }
+
+        .hero {
+            background: rgba(255,255,255,0.82); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.72); border-radius: 24px;
+            box-shadow: var(--shadow); padding: 18px 20px; margin-bottom: 18px;
+        }
+        .hero h2 { margin: 0; font-size: 24px; color: var(--primary-dark); }
+        .hero p { margin: 5px 0 0 0; color: var(--muted); font-size: 13px; }
+
+        .alert-success, .alert-danger {
+            padding: 13px 15px; border-radius: 14px; margin-bottom: 16px;
+            font-size: 14px; box-shadow: var(--shadow);
+        }
+        .alert-success { background: var(--success-bg); color: var(--success-text); border: 1px solid #cce7cf; }
+        .alert-danger { background: var(--danger-bg); color: var(--danger-text); border: 1px solid #f3c6c1; }
+
+        .card {
+            background: rgba(255,255,255,0.92); border: 1px solid rgba(229,231,235,0.86);
+            border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; margin-bottom: 18px;
+        }
+        .card h2, .card h3 { margin-top: 0; color: var(--primary-dark); }
+        .card h2 { font-size: 18px; margin-bottom: 14px; }
+        .card h3 { font-size: 15px; margin-bottom: 10px; }
+
+        .slims-card { border-left: 5px solid #1d4ed8; }
+
+        .slims-status {
+            display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+            border-radius: 12px; font-size: 13px; font-weight: 600; margin-bottom: 16px;
+        }
+        .slims-status .dot {
+            width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto;
+            animation: pulse 2s infinite;
+        }
+        .slims-status.connected { background: #e8f5e9; color: #1b5e20; border: 1px solid #cce7cf; }
+        .slims-status.connected .dot { background: #22c55e; }
+        .slims-status.not-configured { background: #fef9c3; color: #854d0e; border: 1px solid #fde68a; }
+        .slims-status.not-configured .dot { background: #f59e0b; animation: none; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .filter-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 12px; align-items: end;
+        }
+        .field label { display: block; font-weight: 700; font-size: 12px; margin-bottom: 6px; color: #374151; }
+        .field input, .field select {
+            width: 100%; padding: 11px 12px; border: 1px solid var(--border);
+            border-radius: 12px; font-size: 13px; background: #fff; outline: none;
+        }
+        .field input:focus, .field select:focus {
+            border-color: #1d4ed8; box-shadow: 0 0 0 3px rgba(29,78,216,0.10);
+        }
+        .btn-slims {
+            width: 100%;
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            color: white; border: none; border-radius: 12px; padding: 12px 16px;
+            font-size: 14px; font-weight: 800; cursor: pointer;
+            box-shadow: 0 6px 16px rgba(29,78,216,0.25);
+        }
+        .btn-slims:hover { opacity: 0.96; }
+        .btn-slims:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .kpi-card {
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            border: 1px solid #edf0f2; border-radius: 18px; padding: 18px; min-height: 110px;
+        }
+        .kpi-label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+        .kpi-value { font-size: 34px; font-weight: 850; color: var(--primary-dark); letter-spacing: -1px; }
+
+        .visual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .graph-box {
+            min-width: 0; background: #fff; border: 1px solid var(--border);
+            border-radius: 18px; padding: 12px;
+        }
+        .graph-box img {
+            width: 100%; min-height: 440px; max-height: 680px; object-fit: contain;
+            border-radius: 14px; background: #fff; display: block;
+        }
+
+        .mini-note { color: var(--muted); font-size: 12px; margin-top: -4px; margin-bottom: 10px; }
+        .section-eyebrow {
+            color: var(--primary-dark); font-size: 12px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;
+        }
+        .network-title {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 10px; margin-bottom: 8px;
+        }
+        .network-title h3 { margin: 0; }
+        .network-badge {
+            display: inline-flex; align-items: center; border-radius: 999px;
+            padding: 6px 10px; font-size: 11px; font-weight: 800; color: var(--primary-dark);
+            background: #eef7f1; border: 1px solid #d9ebdf; white-space: nowrap;
+        }
+        .community-box {
+            margin-top: 12px; padding: 12px; border-radius: 14px;
+            border: 1px solid var(--border); background: #fbfcfd;
+        }
+        .community-grid-color { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+        .community-item {
+            display: flex; align-items: flex-start; gap: 8px; padding: 8px;
+            border-radius: 12px; background: white; border: 1px solid #eef0f2; font-size: 12px;
+        }
+        .community-dot {
+            width: 13px; height: 13px; border-radius: 50%; margin-top: 2px; flex: 0 0 auto;
+            border: 2px solid white; box-shadow: 0 0 0 1px rgba(0,0,0,0.12);
+        }
+        .community-meta { min-width: 0; line-height: 1.35; }
+        .community-meta strong { display: block; color: #111827; font-size: 12px; }
+        .community-meta span { display: block; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+
+        .download-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .download-link {
+            display: inline-flex; text-decoration: none; background: #198754;
+            color: white; padding: 10px 13px; border-radius: 12px; font-size: 13px; font-weight: 700;
+        }
+        .download-link:nth-child(2), .download-link:nth-child(3) { background: #0f6b3f; }
+
+        .data-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+        .table-wrap {
+            overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); max-height: 420px;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; }
+        th, td { border-bottom: 1px solid #eef0f2; padding: 9px 10px; text-align: left; vertical-align: top; }
+        th { background: #f7f9fb; font-weight: 800; color: #374151; position: sticky; top: 0; z-index: 1; }
+        tr:hover td { background: #fbfcfd; }
+
+        .community-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .community {
+            padding: 13px 14px; border-radius: 14px;
+            background: #fff9e8; border: 1px solid #f2df9a; font-size: 13px; line-height: 1.55;
+        }
+        .insight-list { margin: 0; padding-left: 18px; line-height: 1.75; font-size: 14px; }
+
+        .loading-overlay {
+            position: fixed; inset: 0; background: rgba(29,78,216,0.75); backdrop-filter: blur(8px);
+            z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .loading-panel {
+            width: min(520px, 100%); background: white; border-radius: 24px;
+            padding: 26px; box-shadow: 0 24px 60px rgba(0,0,0,0.28); text-align: center;
+        }
+        .loading-panel h3 { margin: 0 0 8px 0; color: #1d4ed8; font-size: 22px; }
+        .loading-panel p { margin: 0 0 16px 0; color: var(--muted); font-size: 13px; }
+        .progress-track {
+            width: 100%; height: 16px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin-bottom: 10px;
+        }
+        .progress-bar {
+            width: 0%; height: 100%;
+            background: linear-gradient(90deg, #1d4ed8, var(--accent));
+            border-radius: 999px; transition: width 0.35s ease;
+        }
+        .progress-text { font-weight: 800; color: #1d4ed8; font-size: 14px; margin-bottom: 8px; }
+        .progress-step { color: var(--muted); font-size: 13px; }
+
+        .site-footer {
+            margin-top: 18px; text-align: center; font-size: 12px;
+            color: var(--muted); line-height: 1.7; padding-bottom: 20px;
+        }
+
+        @media (max-width: 1180px) {
+            .filter-grid { grid-template-columns: repeat(2, 1fr); }
+            .visual-grid, .data-grid, .community-grid, .community-grid-color { grid-template-columns: 1fr; }
+            .graph-box img { min-height: 340px; }
+        }
+        @media (max-width: 760px) {
+            .main { padding: 14px; }
+            .top-header { align-items: flex-start; flex-direction: column; }
+            .filter-grid, .kpi-grid { grid-template-columns: 1fr; }
+            .network-title { align-items: flex-start; flex-direction: column; }
+        }
+    </style>
+</head>
+
+<body>
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-panel">
+        <h3>Mengambil Data dari SLIMS</h3>
+        <p>Menyambungkan ke server dan membangun jaringan perpustakaan secara real-time.</p>
+        <div class="progress-track">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">0%</div>
+        <div class="progress-step" id="progressStep">Menghubungi server SLIMS...</div>
+    </div>
+</div>
+
+<main class="main">
+    <header class="top-header">
+        <div class="header-left">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo LIBNIS MAM">
+            <div>
+                <h1>LIBNIS MAM</h1>
+                <small>Sistem Analisis Jejaring Perpustakaan</small>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="/" class="mode-btn inactive">Upload Excel</a>
+            <a href="/slims" class="mode-btn active">Data Live SLIMS</a>
+            <a href="/settings" class="settings-link">Pengaturan</a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h2>Analisis Real-Time dari Database SLIMS</h2>
+        <p>
+            Data sirkulasi diambil langsung dari SLIMS Perpustakaan Mualimat.
+            Jaringan buku dan peminjam dibangun otomatis setiap kali analisis dijalankan.
+        </p>
+    </section>
+
+    {% if success %}
+    <div class="alert-success">{{ success }}</div>
+    {% endif %}
+    {% if error %}
+    <div class="alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <section class="card slims-card">
+        <h2>Analisis Data Live</h2>
+
+        {% if is_configured %}
+        <div class="slims-status connected">
+            <span class="dot"></span>
+            Terhubung ke {{ slims_url }}
+        </div>
+        {% else %}
+        <div class="slims-status not-configured">
+            <span class="dot"></span>
+            Koneksi SLIMS belum dikonfigurasi.
+            <a href="/settings" style="color:inherit;font-weight:800;">Atur sekarang →</a>
+        </div>
+        {% endif %}
+
+        <form method="POST" id="analysisForm">
+            <div class="filter-grid">
+                <div class="field">
+                    <label>Periode awal</label>
+                    <input type="date" name="start_date" value="{{ request.form.get('start_date', '') }}">
+                </div>
+                <div class="field">
+                    <label>Periode akhir</label>
+                    <input type="date" name="end_date" value="{{ request.form.get('end_date', '') }}">
+                </div>
+                <div class="field">
+                    <label>Kelompok pengguna</label>
+                    <select name="kelompok">
+                        <option value="Semua">Semua</option>
+                        <option value="MA">MA</option>
+                        <option value="MTs">MTs</option>
+                        <option value="ID Numerik">ID Numerik</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Status sirkulasi</label>
+                    <select name="status">
+                        <option value="Semua">Semua</option>
+                        <option value="Dipinjam">Dipinjam</option>
+                        <option value="Kembali">Kembali</option>
+                        <option value="Tidak diketahui">Tidak diketahui</option>
+                    </select>
+                </div>
+            </div>
+            <div style="margin-top:14px; max-width:260px;">
+                <button class="btn-slims" type="submit" {% if not is_configured %}disabled{% endif %}>
+                    Analisis Data Live
+                </button>
+            </div>
+        </form>
+    </section>
+
+    {% if summary %}
+    <section class="card">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Transaksi Sirkulasi</div>
+                <div class="kpi-value">{{ summary.total_transaksi }}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Judul Terpinjam</div>
+                <div class="kpi-value">{{ summary.total_judul }}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Anggota Peminjam</div>
+                <div class="kpi-value">{{ summary.total_anggota }}</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="section-eyebrow">Visualisasi Jejaring Koleksi dan Peminjaman</div>
+        <h2>Visualisasi Jejaring Koleksi dan Peminjaman</h2>
+        <div class="mini-note">
+            Warna node menunjukkan komunitas. Ukuran node menunjukkan degree centrality:
+            semakin besar node, semakin tinggi keterhubungannya.
+        </div>
+
+        <div class="visual-grid">
+            <div class="graph-box">
+                <div class="network-title">
+                    <h3>Jejaring Keterkaitan Koleksi</h3>
+                    <span class="network-badge">Warna = komunitas</span>
+                </div>
+                <img src="{{ url_for('static', filename='graphs/' + book_graph) }}" alt="Jejaring Keterkaitan Koleksi">
+                <div class="community-box">
+                    {% if book_community_summary %}
+                    <div class="community-grid-color">
+                        {% for c in book_community_summary %}
+                        <div class="community-item">
+                            <span class="community-dot" style="background: {{ c.color }}"></span>
+                            <div class="community-meta">
+                                <strong>Komunitas {{ c.community }} · {{ c.nodes }} node</strong>
+                                <span>{{ c.examples }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="mini-note">Keterangan komunitas belum tersedia.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="graph-box">
+                <div class="network-title">
+                    <h3>Jejaring Kesamaan Peminjaman Anggota</h3>
+                    <span class="network-badge">Ukuran = degree centrality</span>
+                </div>
+                <img src="{{ url_for('static', filename='graphs/' + member_graph) }}" alt="Jejaring Kesamaan Peminjaman Anggota">
+                <div class="community-box">
+                    {% if member_community_summary %}
+                    <div class="community-grid-color">
+                        {% for c in member_community_summary %}
+                        <div class="community-item">
+                            <span class="community-dot" style="background: {{ c.color }}"></span>
+                            <div class="community-meta">
+                                <strong>Komunitas {{ c.community }} · {{ c.nodes }} node</strong>
+                                <span>{{ c.examples }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="mini-note">Keterangan komunitas belum tersedia.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Unduh Data Analisis</h2>
+        <div class="download-group">
+            <a class="download-link" href="{{ url_for('download_file', filename=excel_file) }}">Laporan Excel</a>
+            <a class="download-link" href="{{ url_for('download_file', filename=gexf_books) }}">GEXF Buku</a>
+            <a class="download-link" href="{{ url_for('download_file', filename=gexf_members) }}">GEXF Peminjam</a>
+        </div>
+    </section>
+
+    <div class="data-grid">
+        <section class="card">
+            <h2>Koleksi Prioritas</h2>
+            <div class="table-wrap">{{ book_table|safe }}</div>
+        </section>
+        <section class="card">
+            <h2>Peminjam Sentral</h2>
+            <div class="table-wrap">{{ member_table|safe }}</div>
+        </section>
+        <section class="card">
+            <h2>Kelompok Pengguna Aktif</h2>
+            <div class="table-wrap">{{ kelompok_table|safe }}</div>
+        </section>
+        <section class="card">
+            <h2>Tren Sirkulasi Bulanan</h2>
+            <div class="table-wrap">{{ monthly_table|safe }}</div>
+        </section>
+        <section class="card">
+            <h2>Judul Paling Sering Dipinjam</h2>
+            <div class="table-wrap">{{ top_titles_table|safe }}</div>
+        </section>
+        <section class="card">
+            <h2>Peminjam Paling Aktif</h2>
+            <div class="table-wrap">{{ top_members_table|safe }}</div>
+        </section>
+    </div>
+
+    <section class="card">
+        <h2>Komunitas Minat Baca</h2>
+        {% if communities %}
+        <div class="community-grid">
+            {% for c in communities %}
+            <div class="community">
+                <strong>Komunitas {{ c.Community }}</strong><br>
+                Jumlah node: {{ c.JumlahNode }}<br>
+                {{ c.ContohAnggota }}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>Belum terbentuk komunitas dari data yang dianalisis.</p>
+        {% endif %}
+    </section>
+
+    <section class="card">
+        <h2>Catatan Analitik</h2>
+        {% if insights %}
+        <ul class="insight-list">
+            {% for item in insights %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>Catatan analisis belum tersedia.</p>
+        {% endif %}
+    </section>
+
+    <div class="site-footer">
+        © 2026 Tedy Setiadi<br>
+        LIBNIS MAM — Sistem Analisis Jejaring Perpustakaan
+    </div>
+    {% endif %}
+
+</main>
+
+<script>
+    const form = document.getElementById("analysisForm");
+    const overlay = document.getElementById("loadingOverlay");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+    const progressStep = document.getElementById("progressStep");
+
+    const steps = {{ processing_steps|default([
+        'Menghubungi server SLIMS...',
+        'Mengambil data sirkulasi...',
+        'Membangun jejaring koleksi...',
+        'Membangun jejaring peminjam...',
+        'Menghitung degree centrality...',
+        'Mendeteksi komunitas...',
+        'Membuat visualisasi graf...',
+        'Menyiapkan laporan dan file GEXF...'
+    ])|tojson }};
+
+    if (form) {
+        form.addEventListener("submit", function () {
+            overlay.style.display = "flex";
+            let percent = 0;
+            let stepIndex = 0;
+            const timer = setInterval(function () {
+                if (percent < 92) {
+                    percent += Math.floor(Math.random() * 6) + 2;
+                    if (percent > 92) percent = 92;
+                    stepIndex = Math.min(steps.length - 1, Math.floor((percent / 100) * steps.length));
+                    progressBar.style.width = percent + "%";
+                    progressText.textContent = percent + "%";
+                    progressStep.textContent = steps[stepIndex];
+                } else {
+                    progressStep.textContent = "Membangun visualisasi jaringan. Mohon tunggu...";
+                    clearInterval(timer);
+                }
+            }, 600);
+        });
+    }
+</script>
+</body>
+</html>

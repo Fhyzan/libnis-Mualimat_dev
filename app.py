@@ -9,10 +9,12 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import networkx as nx
-from flask import Flask, render_template, request, send_file, redirect, url_for
+from flask import Flask, render_template, request, send_file, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 
 import engine_web as engine
+import slims_connector as slims
+import sync_client
 
 app = Flask(__name__)
 
@@ -23,6 +25,26 @@ GRAPH_FOLDER = os.path.join("static", "graphs")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 os.makedirs(GRAPH_FOLDER, exist_ok=True)
+
+DEBUG_MODE = True  # dipakai juga oleh app.run(debug=...) di bagian bawah file
+
+
+def _sync_startup_allowed():
+    if __name__ != "__main__":
+        # Diimpor oleh WSGI server produksi (gunicorn/waitress) - tidak ada
+        # reloader Werkzeug yang terlibat, aman untuk langsung start.
+        return True
+    if not DEBUG_MODE:
+        return True
+    # `python app.py` dengan debug=True memicu Werkzeug reloader, yang
+    # menjalankan ulang seluruh file ini di subprocess kedua (dengan
+    # WERKZEUG_RUN_MAIN=true). Proses watcher (parent) tidak boleh ikut
+    # start thread supaya sync tidak berjalan dobel.
+    return os.environ.get("WERKZEUG_RUN_MAIN") == "true"
+
+
+if _sync_startup_allowed():
+    sync_client.start_background_sync(app)
 
 
 # ==========================================================
@@ -404,6 +426,195 @@ def download_file(filename):
     return redirect(url_for("index"))
 
 
+# ==========================================================
+# SLIMS Live Integration
+# ==========================================================
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    cfg = slims.load_config()
+    saved = False
+    error = None
+
+    if request.method == "POST":
+        cfg["base_url"] = request.form.get("base_url", "").strip()
+        cfg["api_key"] = request.form.get("api_key", "").strip()
+        cfg["loan_endpoint"] = request.form.get("loan_endpoint", "/api/v1/loan").strip()
+        cfg["timeout"] = int(request.form.get("timeout", 30) or 30)
+        cfg["page_size"] = int(request.form.get("page_size", 200) or 200)
+        cfg["verify_ssl"] = request.form.get("verify_ssl") == "on"
+        try:
+            slims.save_config(cfg)
+            saved = True
+        except Exception as e:
+            error = f"Gagal menyimpan konfigurasi: {e}"
+
+    return render_template("settings.html", cfg=cfg, saved=saved, error=error)
+
+
+@app.route("/sync/status", methods=["GET"])
+def sync_status():
+    return jsonify(sync_client.get_sync_status())
+
+
+@app.route("/api/sync/test", methods=["POST"])
+def sync_test():
+    ok, message = sync_client.test_connection_now()
+    return jsonify({"ok": ok, "message": message})
+
+
+@app.route("/api/slims/test", methods=["POST"])
+def slims_test():
+    data = request.get_json(force=True) or {}
+    cfg = {
+        "base_url": data.get("base_url", "").strip(),
+        "api_key": data.get("api_key", "").strip(),
+        "loan_endpoint": data.get("loan_endpoint", "/api/v1/loan").strip(),
+        "timeout": int(data.get("timeout", 30) or 30),
+        "page_size": 1,
+        "verify_ssl": data.get("verify_ssl", True),
+    }
+    connector = slims.SlimsConnector(cfg)
+    ok, message = connector.test_connection()
+    return jsonify({"ok": ok, "message": message})
+
+
+@app.route("/slims", methods=["GET", "POST"])
+def slims_live():
+    processing_steps = [
+        "Menghubungi server SLIMS",
+        "Mengambil data sirkulasi",
+        "Membangun jaringan buku",
+        "Membangun jaringan peminjam",
+        "Menghitung degree centrality",
+        "Mendeteksi komunitas",
+        "Membuat visualisasi",
+        "Menyiapkan laporan",
+    ]
+
+    cfg = slims.load_config()
+    slims_url = cfg.get("base_url", "")
+    is_configured = bool(slims_url)
+
+    if request.method == "POST":
+        if not is_configured:
+            return render_template(
+                "slims.html",
+                error="Koneksi SLIMS belum dikonfigurasi. Silakan atur di halaman Pengaturan.",
+                slims_url=slims_url,
+                is_configured=is_configured,
+                processing_steps=processing_steps,
+            )
+
+        start_date = request.form.get("start_date") or None
+        end_date = request.form.get("end_date") or None
+        kelompok = request.form.get("kelompok") or None
+        status = request.form.get("status") or None
+
+        try:
+            connector = slims.SlimsConnector(cfg)
+            records = connector.fetch_all_loans(start_date=start_date, end_date=end_date)
+
+            if not records:
+                return render_template(
+                    "slims.html",
+                    error="Tidak ada data yang diterima dari SLIMS. Periksa koneksi dan rentang tanggal.",
+                    slims_url=slims_url,
+                    is_configured=is_configured,
+                    processing_steps=processing_steps,
+                )
+
+            df_raw = connector.to_dataframe(records)
+            df = engine.filter_data(
+                df_raw,
+                start_date=start_date,
+                end_date=end_date,
+                kelompok=kelompok,
+                status=status,
+            )
+
+            summary = engine.circulation_summary(df)
+            G_books = engine.build_book_graph(df)
+            G_members = engine.build_member_graph(df)
+
+            _, _, book_communities = _enrich_graph_with_visual_attributes(G_books)
+            _, _, member_communities = _enrich_graph_with_visual_attributes(G_members)
+
+            m_books = engine.compute_metrics(G_books)
+            m_members = engine.compute_metrics(G_members)
+
+            kelompok_df = engine.kelompok_stats(df)
+            monthly_df = engine.monthly_stats(df)
+            top_titles_df = engine.top_titles(df, 10)
+            top_members_df = engine.top_members(df, 10)
+
+            communities = engine.detect_communities(G_books)
+            insights = engine.generate_library_insights(df, m_books, m_members)
+
+            unique_id = str(uuid.uuid4())[:8]
+            book_graph_file = f"book_graph_{unique_id}.png"
+            member_graph_file = f"member_graph_{unique_id}.png"
+
+            draw_graph_to_file(G_books, os.path.join(GRAPH_FOLDER, book_graph_file), "Jaringan Keterkaitan Koleksi")
+            draw_graph_to_file(G_members, os.path.join(GRAPH_FOLDER, member_graph_file), "Jaringan Kesamaan Peminjaman Anggota")
+
+            excel_path = os.path.join(OUTPUT_FOLDER, f"laporan_libnis_mam_{unique_id}.xlsx")
+            engine.export_excel(excel_path, {
+                "DataSirkulasiTersaring": df,
+                "KoleksiPrioritas": m_books,
+                "AnggotaRagamBacaan": m_members,
+                "KelompokPenggunaAktif": kelompok_df,
+                "TrenSirkulasiBulanan": monthly_df,
+                "JudulSeringDipinjam": top_titles_df,
+                "AnggotaPalingAktif": top_members_df,
+            })
+
+            gexf_books = os.path.join(OUTPUT_FOLDER, f"visualisasi_koleksi_{unique_id}.gexf")
+            gexf_members = os.path.join(OUTPUT_FOLDER, f"visualisasi_anggota_{unique_id}.gexf")
+            engine.export_gexf(G_books, gexf_books)
+            engine.export_gexf(G_members, gexf_members)
+
+            return render_template(
+                "slims.html",
+                slims_url=slims_url,
+                is_configured=is_configured,
+                success=f"Analisis berhasil. Data diambil langsung dari SLIMS ({len(records):,} transaksi).",
+                summary=summary,
+                insights=insights,
+                book_table=m_books.head(15).to_html(classes="table table-striped", index=False),
+                member_table=m_members.head(15).to_html(classes="table table-striped", index=False),
+                kelompok_table=kelompok_df.to_html(classes="table table-striped", index=False),
+                monthly_table=monthly_df.to_html(classes="table table-striped", index=False),
+                top_titles_table=top_titles_df.to_html(classes="table table-striped", index=False),
+                top_members_table=top_members_df.to_html(classes="table table-striped", index=False),
+                communities=communities,
+                book_community_summary=_community_summary(book_communities, G_books),
+                member_community_summary=_community_summary(member_communities, G_members),
+                book_graph=book_graph_file,
+                member_graph=member_graph_file,
+                excel_file=os.path.basename(excel_path),
+                gexf_books=os.path.basename(gexf_books),
+                gexf_members=os.path.basename(gexf_members),
+                processing_steps=processing_steps,
+            )
+
+        except Exception as e:
+            return render_template(
+                "slims.html",
+                error=f"Gagal mengambil data dari SLIMS: {e}",
+                slims_url=slims_url,
+                is_configured=is_configured,
+                processing_steps=processing_steps,
+            )
+
+    return render_template(
+        "slims.html",
+        slims_url=slims_url,
+        is_configured=is_configured,
+        processing_steps=processing_steps,
+    )
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=7860, debug=True)
+    app.run(host="0.0.0.0", port=7860, debug=DEBUG_MODE)
 

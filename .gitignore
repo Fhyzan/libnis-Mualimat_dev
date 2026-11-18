@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.venv-1/
+
+# Config & secrets - jangan pernah commit
+.env
+slims_config.json
+
+# Data sync (bisa berisi data anggota/PII) + hasil proses
+data/*.sqlite3
+uploads/*.xlsx
+output/
+
+# OS
+.DS_Store
+
+# Grafik hasil proses (dibuat ulang tiap analisis)
+static/graphs/

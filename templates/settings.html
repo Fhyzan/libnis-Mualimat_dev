@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Pengaturan SLIMS – LIBNIS MAM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --primary: #0f6b3f;
+            --primary-dark: #083b25;
+            --primary-soft: #e8f5ee;
+            --accent: #f4b400;
+            --bg: #eef3f7;
+            --card: #ffffff;
+            --text: #172033;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --success-bg: #e8f5e9;
+            --success-text: #1b5e20;
+            --danger-bg: #fdecea;
+            --danger-text: #b3261e;
+            --shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+            --radius: 18px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(15,107,63,0.16), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(244,180,0,0.12), transparent 24%),
+                var(--bg);
+            color: var(--text);
+        }
+        .main { min-width: 0; padding: 22px; max-width: 860px; margin: 0 auto; }
+        .top-header {
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 18px; background: rgba(255,255,255,0.88); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.72); border-radius: 24px;
+            box-shadow: var(--shadow); padding: 16px 20px; margin-bottom: 18px;
+        }
+        .header-left { display: flex; align-items: center; gap: 14px; }
+        .header-left img {
+            width: 54px; height: 54px; object-fit: contain; background: white;
+            border-radius: 14px; padding: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+        }
+        .header-left h1 { margin: 0; color: var(--primary-dark); font-size: 22px; }
+        .header-left small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+        .back-link {
+            text-decoration: none; background: var(--primary-soft); color: var(--primary-dark);
+            padding: 9px 16px; border-radius: 999px; font-weight: 700; font-size: 13px;
+            border: 1px solid #cce7d8;
+        }
+        .back-link:hover { background: #d4edde; }
+        .card {
+            background: rgba(255,255,255,0.92); border: 1px solid rgba(229,231,235,0.86);
+            border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; margin-bottom: 18px;
+        }
+        .card h2 { margin: 0 0 6px 0; color: var(--primary-dark); font-size: 18px; }
+        .card .subtitle { color: var(--muted); font-size: 13px; margin: 0 0 20px 0; }
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-weight: 700; font-size: 12px; margin-bottom: 6px; color: #374151; }
+        .field input[type="text"],
+        .field input[type="url"],
+        .field input[type="number"] {
+            width: 100%; padding: 11px 14px; border: 1px solid var(--border);
+            border-radius: 12px; font-size: 14px; background: #fff; outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .field input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15,107,63,0.10);
+        }
+        .field .hint { margin-top: 5px; color: var(--muted); font-size: 11px; }
+        .toggle-row { display: flex; align-items: center; gap: 10px; }
+        .toggle-row input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+        .toggle-row label { font-size: 13px; color: #374151; font-weight: 600; cursor: pointer; }
+        .btn-row { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white; border: none; border-radius: 12px; padding: 12px 24px;
+            font-size: 14px; font-weight: 800; cursor: pointer;
+            box-shadow: 0 6px 16px rgba(15,107,63,0.25);
+        }
+        .btn-primary:hover { opacity: 0.92; }
+        .btn-test {
+            background: #1d4ed8; color: white; border: none; border-radius: 12px;
+            padding: 12px 24px; font-size: 14px; font-weight: 800; cursor: pointer;
+            box-shadow: 0 6px 16px rgba(29,78,216,0.20);
+        }
+        .btn-test:hover { opacity: 0.92; }
+        .btn-test:disabled { opacity: 0.6; cursor: not-allowed; }
+        .alert-success {
+            padding: 13px 15px; border-radius: 14px; margin-bottom: 16px; font-size: 14px;
+            background: var(--success-bg); color: var(--success-text); border: 1px solid #cce7cf;
+        }
+        .alert-danger {
+            padding: 13px 15px; border-radius: 14px; margin-bottom: 16px; font-size: 14px;
+            background: var(--danger-bg); color: var(--danger-text); border: 1px solid #f3c6c1;
+        }
+        .test-result {
+            margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+            font-size: 13px; display: none;
+        }
+        .test-result.ok { background: var(--success-bg); color: var(--success-text); border: 1px solid #cce7cf; }
+        .test-result.fail { background: var(--danger-bg); color: var(--danger-text); border: 1px solid #f3c6c1; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .info-box {
+            background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 14px;
+            padding: 14px 16px; font-size: 13px; color: #1e3a5f; margin-bottom: 18px;
+        }
+        .info-box strong { display: block; margin-bottom: 4px; font-size: 13px; }
+        .info-box ul { margin: 6px 0 0 0; padding-left: 18px; line-height: 1.7; }
+        .site-footer { margin-top: 18px; text-align: center; font-size: 12px; color: var(--muted); padding-bottom: 20px; }
+        .sync-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .sync-table th, .sync-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+        .sync-table th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; }
+        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .status-badge.ok { background: var(--success-bg); color: var(--success-text); }
+        .status-badge.error { background: var(--danger-bg); color: var(--danger-text); }
+        .status-badge.unknown { background: #f1f5f9; color: var(--muted); }
+        .conn-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
+        .conn-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+        .conn-dot.ok { background: #16a34a; }
+        .conn-dot.error { background: #dc2626; }
+        @media (max-width: 600px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .top-header { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+<main class="main">
+    <header class="top-header">
+        <div class="header-left">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo LIBNIS MAM">
+            <div>
+                <h1>Pengaturan Koneksi SLIMS</h1>
+                <small>LIBNIS MAM — Perpustakaan Mualimat</small>
+            </div>
+        </div>
+        <a href="/slims" class="back-link">← Kembali ke Analisis</a>
+    </header>
+
+    {% if saved %}
+    <div class="alert-success">Konfigurasi berhasil disimpan.</div>
+    {% endif %}
+    {% if error %}
+    <div class="alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <div class="info-box">
+        <strong>Cara mendapatkan informasi koneksi</strong>
+        <ul>
+            <li>Tanyakan ke tim IT Mualimat: URL server SLIMS dan API key yang aktif.</li>
+            <li>URL biasanya berbentuk: <code>http://perpus.mualimat.sch.id</code></li>
+            <li>API key dapat dibuat di panel admin SLIMS: <em>System → REST API</em></li>
+            <li>Endpoint default SLIMS Akasia/Bulian: <code>/api/v1/loan</code></li>
+        </ul>
+    </div>
+
+    <form method="POST" id="settingsForm">
+        <div class="card">
+            <h2>Koneksi Server SLIMS</h2>
+            <p class="subtitle">Konfigurasi alamat dan autentikasi ke server SLIMS Perpustakaan Mualimat.</p>
+
+            <div class="field">
+                <label>URL Server SLIMS *</label>
+                <input type="url" name="base_url" value="{{ cfg.base_url }}"
+                    placeholder="http://perpus.mualimat.sch.id" required>
+                <div class="hint">Tanpa garis miring di akhir. Contoh: http://192.168.1.10 atau http://slims.mualimat.sch.id</div>
+            </div>
+
+            <div class="field">
+                <label>API Key</label>
+                <input type="text" name="api_key" value="{{ cfg.api_key }}"
+                    placeholder="Masukkan API key dari panel admin SLIMS">
+                <div class="hint">Kosongkan jika SLIMS tidak memerlukan autentikasi API key.</div>
+            </div>
+
+            <div class="field">
+                <label>Endpoint Data Sirkulasi</label>
+                <input type="text" name="loan_endpoint" value="{{ cfg.loan_endpoint }}"
+                    placeholder="/api/v1/loan">
+                <div class="hint">Path endpoint untuk data peminjaman. Default: /api/v1/loan</div>
+            </div>
+
+            <div class="grid-2">
+                <div class="field">
+                    <label>Timeout (detik)</label>
+                    <input type="number" name="timeout" value="{{ cfg.timeout }}" min="5" max="120" step="5">
+                    <div class="hint">Batas waktu tunggu respons server.</div>
+                </div>
+                <div class="field">
+                    <label>Jumlah Data per Halaman</label>
+                    <input type="number" name="page_size" value="{{ cfg.page_size }}" min="50" max="1000" step="50">
+                    <div class="hint">Jumlah record yang diambil per request (pagination).</div>
+                </div>
+            </div>
+
+            <div class="toggle-row">
+                <input type="checkbox" name="verify_ssl" id="verify_ssl" {% if cfg.verify_ssl %}checked{% endif %}>
+                <label for="verify_ssl">Verifikasi sertifikat SSL</label>
+            </div>
+            <div class="hint" style="margin-top:4px; margin-bottom:8px;">Nonaktifkan jika server SLIMS menggunakan sertifikat self-signed.</div>
+
+            <div id="testResult" class="test-result"></div>
+
+            <div class="btn-row">
+                <button type="submit" class="btn-primary">Simpan Konfigurasi</button>
+                <button type="button" class="btn-test" id="btnTest" onclick="testConnection()">Uji Koneksi</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="card">
+        <h2>Status Sinkronisasi Otomatis SLiMS</h2>
+        <p class="subtitle">
+            Sinkronisasi berkala dari database SLiMS lewat <code>slims_sync_api</code>
+            di Komputer B. Terpisah dari koneksi manual di atas.
+            <span id="syncConnPill" class="conn-pill"><span class="conn-dot" id="syncConnDot"></span><span id="syncConnLabel">Memuat status...</span></span>
+        </p>
+
+        <div style="overflow-x:auto;">
+            <table class="sync-table">
+                <thead>
+                    <tr>
+                        <th>Tabel</th>
+                        <th>Sync Terakhir Berhasil</th>
+                        <th>Status</th>
+                        <th>Baris Disinkronkan</th>
+                        <th>Error</th>
+                    </tr>
+                </thead>
+                <tbody id="syncStatusBody">
+                    <tr><td colspan="5">Memuat...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="syncTestResult" class="test-result"></div>
+
+        <div class="btn-row">
+            <button type="button" class="btn-test" id="btnSyncTest" onclick="testSyncConnection()">Uji Koneksi Sync</button>
+            <button type="button" class="btn-test" onclick="loadSyncStatus()">Muat Ulang Status</button>
+        </div>
+    </div>
+
+    <div class="site-footer">
+        © 2026 Tedy Setiadi · LIBNIS MAM — Sistem Analisis Jejaring Perpustakaan
+    </div>
+</main>
+
+<script>
+    function renderSyncStatus(data) {
+        const body = document.getElementById("syncStatusBody");
+        const dot = document.getElementById("syncConnDot");
+        const label = document.getElementById("syncConnLabel");
+
+        if (!data.enabled) {
+            body.innerHTML = '<tr><td colspan="5">Sync belum dikonfigurasi (SLIMS_API_BASE_URL / SLIMS_API_KEY belum diset).</td></tr>';
+            dot.className = "conn-dot";
+            label.textContent = "Tidak dikonfigurasi";
+            return;
+        }
+
+        dot.className = "conn-dot " + (data.api_reachable ? "ok" : "error");
+        label.textContent = data.api_reachable ? "Terhubung" : "Tidak terhubung";
+
+        body.innerHTML = data.tables.map(function (t) {
+            const badgeClass = t.status === "ok" ? "ok" : (t.status === "error" ? "error" : "unknown");
+            return "<tr>" +
+                "<td>" + t.table + "</td>" +
+                "<td>" + (t.last_synced_at || "-") + "</td>" +
+                "<td><span class=\"status-badge " + badgeClass + "\">" + t.status + "</span></td>" +
+                "<td>" + (t.row_count ?? "-") + "</td>" +
+                "<td>" + (t.error || "-") + "</td>" +
+                "</tr>";
+        }).join("");
+    }
+
+    async function loadSyncStatus() {
+        try {
+            const resp = await fetch("/sync/status");
+            const data = await resp.json();
+            renderSyncStatus(data);
+        } catch (e) {
+            document.getElementById("syncStatusBody").innerHTML =
+                '<tr><td colspan="5">Gagal memuat status: ' + e.message + '</td></tr>';
+        }
+    }
+
+    async function testSyncConnection() {
+        const btn = document.getElementById("btnSyncTest");
+        const result = document.getElementById("syncTestResult");
+
+        btn.disabled = true;
+        btn.textContent = "Menguji...";
+        result.style.display = "none";
+
+        try {
+            const resp = await fetch("/api/sync/test", { method: "POST" });
+            const data = await resp.json();
+            result.className = "test-result " + (data.ok ? "ok" : "fail");
+            result.textContent = (data.ok ? "✓ " : "✗ ") + data.message;
+            result.style.display = "block";
+        } catch (e) {
+            result.className = "test-result fail";
+            result.textContent = "✗ Gagal menghubungi server: " + e.message;
+            result.style.display = "block";
+        }
+
+        btn.disabled = false;
+        btn.textContent = "Uji Koneksi Sync";
+    }
+
+    loadSyncStatus();
+
+    async function testConnection() {
+        const btn = document.getElementById("btnTest");
+        const result = document.getElementById("testResult");
+
+        btn.disabled = true;
+        btn.textContent = "Menguji...";
+        result.style.display = "none";
+
+        const payload = {
+            base_url: document.querySelector("[name=base_url]").value.trim(),
+            api_key: document.querySelector("[name=api_key]").value.trim(),
+            loan_endpoint: document.querySelector("[name=loan_endpoint]").value.trim(),
+            timeout: parseInt(document.querySelector("[name=timeout]").value) || 30,
+            verify_ssl: document.getElementById("verify_ssl").checked,
+        };
+
+        try {
+            const resp = await fetch("/api/slims/test", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            const data = await resp.json();
+            result.className = "test-result " + (data.ok ? "ok" : "fail");
+            result.textContent = (data.ok ? "✓ " : "✗ ") + data.message;
+            result.style.display = "block";
+        } catch (e) {
+            result.className = "test-result fail";
+            result.textContent = "✗ Gagal menghubungi server: " + e.message;
+            result.style.display = "block";
+        }
+
+        btn.disabled = false;
+        btn.textContent = "Uji Koneksi";
+    }
+</script>
+</body>
+</html>
